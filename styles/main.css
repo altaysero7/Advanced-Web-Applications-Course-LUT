@@ -1,0 +1,31 @@
+/* Referencing https://stackoverflow.com/questions/5608222/how-to-apply-box-shadow-on-all-four-sides */
+
+.wiki-img {
+    width: 100%;
+}
+
+.wiki-item {
+    margin-right: 10px;
+    margin-left: 10px;
+    box-shadow:  0px 0px 3px 3px black;
+}
+
+.wiki-content {
+    padding: 5px;
+}
+
+/* desktop view */
+@media screen and (min-width: 600px) {
+    .wiki-content {
+        display: flex;
+        flex-direction: row-reverse;
+    }
+    .wiki-text, .img-container {
+        min-width: 50%;
+        max-width: 50%;
+    }
+    .container {
+        max-width: 960px;
+        margin: 0 auto;
+    }
+}
