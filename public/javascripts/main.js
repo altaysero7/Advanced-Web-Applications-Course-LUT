@@ -1,147 +1,64 @@
-const submitButton = document.getElementById('submit-data');
-const searchButton = document.getElementById('search');
+// Referencing week 2-4 source codes
 
-function clearContent() {
-    const paragraphs = document.querySelectorAll('p');
-    paragraphs.forEach(p => p.remove());
+document.addEventListener('DOMContentLoaded', () => {
+    fetch('/recipe/kebab')
+        .then(response => response.json())
+        .then(({ name, ingredients, instructions }) => {
+            document.getElementById('recipe-name').textContent = name;
 
-    const deleteButtons = document.querySelectorAll('#delete-user');
-    deleteButtons.forEach(btn => btn.remove());
-
-    const deleteTodoButtons = document.querySelectorAll('.delete-task');
-    deleteTodoButtons.forEach(btn => btn.remove());
-
-    const dynamicDivs = document.querySelectorAll('div');
-    dynamicDivs.forEach(div => {
-        div.remove();
-    });
-}
-
-function createParagraph(text) {
-    const p = document.createElement('p');
-    p.innerText = text;
-    document.body.appendChild(p);
-}
-
-function createContent(json) {
-    const div = document.createElement('div');
-    const jsonName = json.name;
-    const jsonTodos = json.todos;
-
-    const startText = document.createTextNode(`name:"${jsonName}", todos:[`);
-    div.appendChild(startText);
-
-    if (jsonTodos) {
-        jsonTodos.forEach((todo, index) => {
-            const todoSpan = document.createElement('span');
-            todoSpan.innerText = `"${todo}" `;
-
-            const deleteTodoButton = document.createElement('button');
-            deleteTodoButton.innerText = 'Delete todo';
-            deleteTodoButton.setAttribute('class', 'delete-task');
-            deleteTodoButton.addEventListener('click', () => {
-                clearContent();
-                fetch(`/user`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ name: jsonName, targetedTodo: todo })
-                })
-                .then(response => {
-                    if (response.ok) {
-                        return response.json();
-                    }
-                })
-                .then(json => {
-                    clearContent();
-                    createParagraph(json.message);
-                })
-                .catch(error => {
-                    console.error(error);
-                });
+            const ingredientsList = document.getElementById('recipe-ingredients');
+            ingredients.forEach(ingredient => {
+                const li = document.createElement('li');
+                li.textContent = ingredient;
+                ingredientsList.appendChild(li);
             });
-            todoSpan.appendChild(deleteTodoButton);
-            div.appendChild(todoSpan);
-            if (index < jsonTodos.length - 1) {
-                div.appendChild(document.createTextNode(', '));
-            }
-        });
-    }
 
-    const endText = document.createTextNode("] ");
-    div.appendChild(endText);
-    document.body.appendChild(div);
-    return div;
-}
-
-submitButton.addEventListener('click', () => {
-    clearContent();
-    const inputName = document.getElementById('input-name');
-    const inputTask = document.getElementById('input-task');
-
-    fetch('/todo', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ name: inputName.value, todos: inputTask.value })
-    })
-        .then(response => {
-            if (response.ok) {
-                return response.text();
-            }
+            const instructionsList = document.getElementById('recipe-instructions');
+            instructions.forEach(instruction => {
+                const li = document.createElement('li');
+                li.textContent = instruction;
+                instructionsList.appendChild(li);
+            });
         })
-        .then(text => createParagraph(text))
-        .catch(error => {
-            console.error(error);
-        });
-});
+        .catch(err => console.error('Error fetching recipe:', err));
 
-searchButton.addEventListener('click', () => {
-    clearContent();
-    const searchedName = document.getElementById('search-name');
+    const addIngredientButton = document.getElementById('add-ingredient');
+    const addInstructionButton = document.getElementById('add-instruction');
+    const submitButton = document.getElementById('submit');
 
-    fetch(`/user/${searchedName.value}`)
-        .then(response => {
-            if (response.ok) {
-                return response.json();
-            }
-        })
-        .then(json => {
-            if (json && json.message === 'User not found') {
-                createParagraph(json.message);
-                return;
-            }
-            if (json && json.message !== 'User not found') {
-                const contentDiv = createContent(json);
-                const deleteButton = document.createElement('button');
-                deleteButton.innerText = 'Delete user';
-                deleteButton.setAttribute('id', 'delete-user');
-                deleteButton.addEventListener('click', () => {
-                    fetch(`/user/${searchedName.value}`, {
-                        method: 'DELETE',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                    })
-                        .then(response => {
-                            if (response.ok) {
-                                return response.json();
-                            }
-                        })
-                        .then(json => {
-                            clearContent();
-                            createParagraph(json.message ? json.message : JSON.stringify(json))
-                        })
-                        .catch(error => {
-                            console.error(error);
-                        });
-                });
-                contentDiv.appendChild(deleteButton);
-            }
-        })
-        .catch(error => {
-            console.error(error);
+    const ingredients = [];
+    const instructions = [];
+
+    addIngredientButton.addEventListener('click', () => {
+        const inputIngredient = document.getElementById('ingredients-text');
+        ingredients.push(inputIngredient.value);
+        inputIngredient.value = '';
+    });
+
+    addInstructionButton.addEventListener('click', () => {
+        const inputInstruction = document.getElementById('instructions-text');
+        instructions.push(inputInstruction.value);
+        inputInstruction.value = '';
+    });
+
+    submitButton.addEventListener('click', () => {
+        const inputName = document.getElementById('name-text');
+        const inputImage = document.getElementById('image-input');
+        const formData = new FormData();
+
+        [...inputImage.files].forEach(file => formData.append('images', file));
+
+        fetch('/recipe/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ name: inputName.value, ingredients: ingredients, instructions: instructions })
         });
+
+        fetch('/images', {
+            method: 'POST',
+            body: formData
+        });
+    });
 });
