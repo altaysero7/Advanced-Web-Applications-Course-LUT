@@ -1,8 +1,23 @@
-/* body {
-  padding: 50px;
-  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+.category-container {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
 }
 
-a {
-  color: #00B7FF;
-} */
+.tick-mark {
+  color: green;
+  margin-right: 8px;
+  display: none;
+}
+
+.tick-mark:not(.hidden) {
+  display: inline;
+}
+
+.active-category {
+  color: green;
+}
+
+.hidden {
+  display: none;
+}

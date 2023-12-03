@@ -1,14 +1,23 @@
-// Referencing week 2-4 source codes
+// Referencing week 2-5 source codes
 
 const createError = require('http-errors');
 const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
+const mongoose = require("mongoose");
+
+// Connecting to database: from week 5 source codes.
+const mongoDB = "mongodb://127.0.0.1:27017/testdb";
+mongoose.connect(mongoDB);
+mongoose.Promise = Promise;
+const db = mongoose.connection;
+db.on("error", console.error.bind(console, "MongoDB connection error:"));
 
 const indexRouter = require('./routes/index');
 const recipeRouter = require('./routes/recipe');
 const imagesRouter = require('./routes/images');
+const categoriesRouter = require('./routes/categories');
 
 const app = express();
 
@@ -27,6 +36,7 @@ app.use("/", indexRouter);
 app.use("/recipe", recipeRouter);
 app.use("/recipe/", recipeRouter);
 app.use("/images", imagesRouter);
+app.use("/categories", categoriesRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

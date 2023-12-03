@@ -3,8 +3,9 @@ extends layout
 block content
     nav
       div(class="nav-wrapper")
-        div(class="container")
           a(class="brand-logo") Recipe Book
+          div(class="right")
+            input(type="search", id="search-field", placeholder="search")
     div(class="container")
       div(class="col")
         h3#recipe-name
@@ -12,6 +13,8 @@ block content
         ul#recipe-ingredients
         h4 Instructions
         ol#recipe-instructions
+        h4 Images
+        div(id="images")
       div(class="col")
         label Name
         input(type="text", id="name-text")
@@ -22,4 +25,6 @@ block content
         textarea(id="instructions-text")
         button(class="btn" id="add-instruction" type="button") Add Instruction
         input(type="file", accept="image/*", multiple, id="image-input")
+        h4 Categories
+        div#categories-section
         button(class="btn" id="submit" type="submit") Submit
