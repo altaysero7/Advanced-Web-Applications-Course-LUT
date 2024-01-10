@@ -1,36 +1,34 @@
-// Referencing week 7 source code
+// Referencing week 8-9 source code
 
 import express, { Express, Request, Response } from 'express';
 import passport from 'passport';
-import session from 'express-session';
+import mongoose from 'mongoose';
 
-import usersRouter, { getUserbyName, getUserbyId } from './routes/users';
-import secretRouter from './routes/secret';
+import usersRouter from './routes/users';
+import privateRouter from './routes/private';
 import todosRouter from './routes/todos';
-const setupAuthentication  = require('./passport-config');
+
+import { setupAuthentication } from './passport-config';
+
+const mongoDB = "mongodb://127.0.0.1:27017/testdb";
+mongoose.connect(mongoDB);
+const db = mongoose.connection;
+db.on('error', console.error.bind(console, 'MongoDB connection error:'));
 
 const app: Express = express();
 const port: number = 3000;
 
 app.use(express.json());
 
-app.use(session({
-    secret: 'veryverysecretkey',
-    resave: false,
-    saveUninitialized: false
-}));
-
-setupAuthentication(passport, getUserbyName, getUserbyId);
-
+setupAuthentication(passport);
 app.use(passport.initialize());
-app.use(passport.session());
 
 app.get('/', (req: Request, res: Response) => {
     res.send('Hello World!');
 });
 
 app.use('/api/user', usersRouter);
-app.use('/api/secret', secretRouter);
+app.use('/api/private', privateRouter);
 app.use('/api/todos', todosRouter);
 
 app.listen(port, () => {

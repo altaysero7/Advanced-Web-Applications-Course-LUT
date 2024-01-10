@@ -1,5 +1,6 @@
 "use strict";
-// Referencing week 7 source code
+// Referencing week 8-9 source code
+// Referencing https://express-validator.github.io/docs/6.6.0/
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -13,68 +14,89 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getUserbyId = exports.getUserbyName = void 0;
 const express_1 = __importDefault(require("express"));
-const router = express_1.default.Router();
 const bcrypt_1 = __importDefault(require("bcrypt"));
-const passport_1 = __importDefault(require("passport"));
-let users = [];
-function getUserbyName(username) {
-    return users.find(user => user.username === username);
-}
-exports.getUserbyName = getUserbyName;
-function getUserbyId(id) {
-    return users.find(user => user.id === id);
-}
-exports.getUserbyId = getUserbyId;
-function checkAuthenticated(req, res, next) {
-    if (req.isAuthenticated()) {
-        return res.redirect('/api/user');
-    }
-    return next();
-}
+const express_validator_1 = require("express-validator");
+const User_1 = require("../models/User");
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const router = express_1.default.Router();
+const registrationValidation = [
+    (0, express_validator_1.body)('email')
+        .isEmail()
+        .withMessage('Must be a valid email address'),
+    (0, express_validator_1.body)('password')
+        .isLength({ min: 8 })
+        .withMessage('Password must be at least 8 characters long')
+        .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[~`!@#$%^&*()\-_+={}[\]|\\:;"'<>,./?]).*$/)
+        .withMessage('Password must contain at least one lowercase letter, one uppercase letter, one number, and one special character')
+];
 /* POST register user. */
-router.post('/register', checkAuthenticated, function (req, res, next) {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            const newUser = req.body;
-            if (getUserbyName(newUser.username)) {
-                return res.status(400).send("Username already exists!");
-            }
-            const hashedPassword = yield bcrypt_1.default.hash(newUser.password, 10);
-            newUser.password = hashedPassword;
-            newUser.id = users.length + 1;
-            users.push(newUser);
-            res.send(newUser);
+router.post('/register', registrationValidation, function (req, res, next) {
+    const errors = (0, express_validator_1.validationResult)(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+    User_1.User.findOne({ email: req.body.email })
+        .then((user) => __awaiter(this, void 0, void 0, function* () {
+        if (user) {
+            res.status(403).send("Email already in use.");
+            return;
         }
-        catch (error) {
-            next(error);
+        else {
+            const hashedPassword = yield bcrypt_1.default.hash(req.body.password, 10);
+            const newUser = new User_1.User({
+                email: req.body.email,
+                password: hashedPassword
+            });
+            return newUser.save();
         }
+    }))
+        .then(savedUser => {
+        if (savedUser) {
+            res.status(200).send("ok");
+        }
+    })
+        .catch(err => {
+        next(err);
     });
 });
 /* POST login user. */
-router.post('/login', checkAuthenticated, function (req, res, next) {
-    passport_1.default.authenticate('local', (err, user, info) => {
-        if (err) {
-            return next(err);
-        }
+router.post('/login', function (req, res, next) {
+    User_1.User.findOne({ email: req.body.email })
+        .then(user => {
         if (!user) {
-            return res.status(401).send("Invalid credentials");
+            res.status(403).send("Email not found.");
+            return;
         }
-        req.logIn(user, (err) => {
-            if (err) {
-                return next(err);
+        else {
+            if (user.password == null) {
+                res.status(403).send("Password not found.");
+                return;
             }
-            return res.status(200).send("User logged in");
-        });
-    })(req, res, next);
-});
-/* GET all users. */
-router.get('/list', function (req, res) {
-    res.send(users);
-});
-/* GET main user page. */
-router.get('/', function (req, res) {
-    res.send("you already logged in bro...");
+            bcrypt_1.default.compare(req.body.password, user.password, (err, result) => {
+                if (err) {
+                    return next(err);
+                }
+                if (result) {
+                    const jwtPayload = {
+                        id: user._id,
+                        email: user.email
+                    };
+                    jsonwebtoken_1.default.sign(jwtPayload, process.env.JWT_SECRET || "veryVeryVerySecretKey", { expiresIn: 120 }, (err, token) => {
+                        if (err) {
+                            return next(err);
+                        }
+                        res.json({ success: true, token: token });
+                    });
+                }
+                else {
+                    res.status(403).send("Incorrect password.");
+                }
+            });
+        }
+    })
+        .catch(err => {
+        next(err);
+    });
 });
 exports.default = router;

@@ -1,45 +1,40 @@
 "use strict";
-// Referencing week 7 source code
+// Referencing week 8-9 source code
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
+const Todo_1 = require("../models/Todo");
+const passport_1 = __importDefault(require("passport"));
 const router = express_1.default.Router();
-let todos = [];
-function getUserTodos(id) {
-    return todos.find(user => user.id === id);
-}
 /* POST todo. */
-router.post('/', function (req, res, next) {
-    if (req.isAuthenticated()) {
-        try {
-            const newTodo = req.body.todo;
-            const user = req.user;
-            const userTodos = getUserTodos(user.id);
-            if (userTodos) {
-                userTodos.todos.push(newTodo);
-                return res.send(userTodos);
-            }
-            else {
-                const newUser = {
-                    id: user.id,
-                    todos: [newTodo]
-                };
-                todos.push(newUser);
-                return res.send(newUser);
-            }
+router.post('/', passport_1.default.authenticate('jwt', { session: false }), function (req, res, next) {
+    const newTodos = req.body.items;
+    const user = req.user;
+    Todo_1.Todo.findOne({ user: user._id })
+        .then(todo => {
+        if (todo === null || todo === void 0 ? void 0 : todo.items) {
+            // Existing todo
+            todo.items = todo.items.concat(newTodos.map(String));
+            return todo.save();
         }
-        catch (error) {
-            next(error);
+        else {
+            // New todo
+            const newTodo = new Todo_1.Todo({
+                user: user._id,
+                items: newTodos
+            });
+            return newTodo.save();
         }
-    }
-    else {
-        res.status(401).send('Not authenticated!');
-    }
-});
-/* GET all todos. */
-router.get('/list', function (req, res) {
-    res.send(todos);
+    })
+        .then(savedTodo => {
+        if (savedTodo) {
+            res.status(200).send("ok");
+        }
+    })
+        .catch(err => {
+        next(err);
+    });
 });
 exports.default = router;

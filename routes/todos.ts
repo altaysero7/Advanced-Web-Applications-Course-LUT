@@ -1,50 +1,40 @@
-// Referencing week 7 source code
+// Referencing week 8-9 source code
 
 import express from 'express';
-import { User } from './users';
+import { Todo } from '../models/Todo';
+import { ObjectId } from 'bson';
+import passport from 'passport';
 const router = express.Router();
 
-interface userTodos {
-    id: number;
-    todos: string[];
-}
-
-let todos: userTodos[] = [];
-
-function getUserTodos(id: number): userTodos | undefined {
-    return todos.find(user => user.id === id);
-}
-
 /* POST todo. */
-router.post('/', function (req, res, next) {
-    if (req.isAuthenticated()) {
-        try {
-            const newTodo: string = req.body.todo;
-            const user = req.user as User;
-            const userTodos = getUserTodos(user.id);
-            if (userTodos) {
-                userTodos.todos.push(newTodo);
-                return res.send(userTodos);
+router.post('/', passport.authenticate('jwt', { session: false }), function (req, res, next) {
+    const newTodos: [String] = req.body.items;
+    const user = req.user as {
+        _id?: ObjectId,
+    };
+    Todo.findOne({ user: user._id })
+        .then(todo => {
+            if (todo?.items) {
+                // Existing todo
+                todo.items = todo.items.concat(newTodos.map(String));
+                return todo.save();
             } else {
-                const newUser: userTodos = {
-                    id: user.id,
-                    todos: [newTodo]
-                }
-                todos.push(newUser);
-                return res.send(newUser);
+                 // New todo
+                const newTodo = new Todo({
+                    user: user._id,
+                    items: newTodos
+                });
+                return newTodo.save();
             }
-        } catch (error) {
-            next(error);
-        }
-
-    } else {
-        res.status(401).send('Not authenticated!');
-    }
-});
-
-/* GET all todos. */
-router.get('/list', function (req, res) {
-    res.send(todos);
+        })
+        .then(savedTodo => {
+            if (savedTodo) {
+                res.status(200).send("ok");
+            }
+        })
+        .catch(err => {
+            next(err);
+        });
 });
 
 export default router;

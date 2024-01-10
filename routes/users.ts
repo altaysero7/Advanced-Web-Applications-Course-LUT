@@ -1,77 +1,102 @@
-// Referencing week 7 source code
+// Referencing week 8-9 source code
+// Referencing https://express-validator.github.io/docs/6.6.0/
 
 import express from 'express';
-const router = express.Router();
 import bcrypt from 'bcrypt';
-import passport from 'passport';
+import { body, validationResult } from 'express-validator';
+import { User } from '../models/User';
+import jwt from 'jsonwebtoken';
+const router = express.Router();
 
-interface User {
-    id: number;
-    username: string;
+interface userType {
+    email: string;
     password: string;
 }
 
-let users: User[] = [];
+const registrationValidation = [
+    body('email')
+        .isEmail()
+        .withMessage('Must be a valid email address'),
 
-function getUserbyName(username: string): User | undefined {
-    return users.find(user => user.username === username);
-}
-
-function getUserbyId(id: number): User | undefined {
-    return users.find(user => user.id === id);
-}
-
-function checkAuthenticated(req: any, res: any, next: any) {
-    if (req.isAuthenticated()) {
-        return res.redirect('/api/user');
-    }
-    return next();
-}
+    body('password')
+        .isLength({ min: 8 })
+        .withMessage('Password must be at least 8 characters long')
+        .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[~`!@#$%^&*()\-_+={}[\]|\\:;"'<>,./?]).*$/)
+        .withMessage('Password must contain at least one lowercase letter, one uppercase letter, one number, and one special character')
+];
 
 /* POST register user. */
-router.post('/register', checkAuthenticated, async function (req, res, next) {
-    try {
-        const newUser: User = req.body;
-        if (getUserbyName(newUser.username)) {
-            return res.status(400).send("Username already exists!");
-        }
-        const hashedPassword = await bcrypt.hash(newUser.password, 10);
-        newUser.password = hashedPassword;
-        newUser.id = users.length + 1;
-        users.push(newUser);
-        res.send(newUser);
-    } catch (error) {
-        next(error);
+router.post('/register', registrationValidation, function (req: any, res: any, next: any) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
     }
+    User.findOne({ email: req.body.email })
+        .then(async user => {
+            if (user) {
+                res.status(403).send("Email already in use.");
+                return;
+            } else {
+                const hashedPassword = await bcrypt.hash(req.body.password, 10);
+                const newUser = new User({
+                    email: req.body.email,
+                    password: hashedPassword
+                });
+                return newUser.save();
+            }
+        })
+        .then(savedUser => {
+            if (savedUser) {
+                res.status(200).send("ok");
+            }
+        })
+        .catch(err => {
+            next(err);
+        });
 });
 
 /* POST login user. */
-router.post('/login', checkAuthenticated, function (req, res, next) {
-    passport.authenticate('local', (err: any, user: User, info: any) => {
-        if (err) {
-            return next(err);
-        }
-        if (!user) {
-            return res.status(401).send("Invalid credentials");
-        }
-        req.logIn(user, (err: any) => {
-            if (err) {
-                return next(err);
+router.post('/login', function (req, res, next) {
+    User.findOne({ email: req.body.email })
+        .then(user => {
+            if (!user) {
+                res.status(403).send("Email not found.");
+                return;
+            } else {
+                if (user.password == null) {
+                    res.status(403).send("Password not found.");
+                    return;
+                }
+                bcrypt.compare(req.body.password, user.password as string, (err, result) => {
+                    if (err) {
+                        return next(err);
+                    }
+                    if (result) {
+                        const jwtPayload = {
+                            id: user._id,
+                            email: user.email
+                        };
+                        jwt.sign(
+                            jwtPayload,
+                            process.env.JWT_SECRET || "veryVeryVerySecretKey",
+                            { expiresIn: 120 },
+                            (err, token) => {
+                                if (err) {
+                                    return next(err);
+                                }
+                                res.json({ success: true, token: token });
+                            }
+                        );
+                    } else {
+                        res.status(403).send("Incorrect password.");
+                    }
+                });
             }
-            return res.status(200).send("User logged in");
-        });
-    })(req, res, next);
-});
-
-/* GET all users. */
-router.get('/list', function (req, res) {
-    res.send(users);
-});
-
-/* GET main user page. */
-router.get('/', function (req, res) {
-    res.send("you already logged in bro...");
+        })
+        .catch(err => {
+            next(err);
+        })
 });
 
 export default router;
-export { User, getUserbyName, getUserbyId };
+export { userType as User };

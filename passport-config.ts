@@ -1,30 +1,27 @@
-// Referencing week 7 source code
+// Referencing week 8-9 source code
 
-const LocalStrategy = require('passport-local').Strategy;
-import bcrypt from 'bcrypt';
-import { User } from './routes/users';
+import { User } from './models/User';
+import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
 
-function setupAuthentication(passport: any, getUserbyName: any, getUserById: any) {
-    const authenticateUser = async (username: string, password: string, done: any) => {
-        const user = getUserbyName(username);
-        if (user == null) {
-            return done(null, false);
-        }
-        try {
-            if (await bcrypt.compare(password, user.password)) {
-                return done(null, user);
-            } else {
-                return done(null, false);
-            }
-        } catch (error) {
-            return done(error);
-        }
-    }
-    passport.use('local', new LocalStrategy({ usernameField: 'username', passwordField: 'password' }, authenticateUser));
-    passport.serializeUser((user: User, done: any) => done(null, user.id));
-    passport.deserializeUser((id: number, done: any) => {
-        return done(null, getUserById(id))
-    });
+const opts = {
+    jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+    secretOrKey: process.env.JWT_SECRET || "veryVeryVerySecretKey"
+};
+
+function setupAuthentication(passport: any) {
+    passport.use(new JwtStrategy(opts, function (jwtPayload, done) {
+        User.findOne({ _id: jwtPayload.id })
+            .then(user => {
+                if (user) {
+                    return done(null, user);
+                } else {
+                    return done(null, false);
+                }
+            })
+            .catch(err => {
+                return done(err, false);
+            });
+    }));
 }
 
-module.exports = setupAuthentication;
+export { setupAuthentication };
