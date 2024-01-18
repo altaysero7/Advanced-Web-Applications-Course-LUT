@@ -19,12 +19,13 @@ const app: Express = express();
 const port: number = 3000;
 
 app.use(express.json());
+app.use(express.static('public'));
 
 setupAuthentication(passport);
 app.use(passport.initialize());
 
 app.get('/', (req: Request, res: Response) => {
-    res.send('Hello World!');
+    res.redirect('/index.html');
 });
 
 app.use('/api/user', usersRouter);

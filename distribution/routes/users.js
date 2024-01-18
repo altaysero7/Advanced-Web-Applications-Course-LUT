@@ -20,6 +20,7 @@ const express_validator_1 = require("express-validator");
 const User_1 = require("../models/User");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const router = express_1.default.Router();
+router.use(express_1.default.urlencoded({ extended: true }));
 const registrationValidation = [
     (0, express_validator_1.body)('email')
         .isEmail()
@@ -34,12 +35,19 @@ const registrationValidation = [
 router.post('/register', registrationValidation, function (req, res, next) {
     const errors = (0, express_validator_1.validationResult)(req);
     if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
+        const customErrors = errors.array();
+        const hasPasswordError = customErrors.some(error => error.path === 'password');
+        if (hasPasswordError) {
+            return res.status(403).send("Password is not strong enough");
+        }
+        else {
+            return res.status(403).send("Invalid email structure");
+        }
     }
     User_1.User.findOne({ email: req.body.email })
         .then((user) => __awaiter(this, void 0, void 0, function* () {
         if (user) {
-            res.status(403).send("Email already in use.");
+            res.status(403).send("Email already in use");
             return;
         }
         else {
@@ -53,7 +61,7 @@ router.post('/register', registrationValidation, function (req, res, next) {
     }))
         .then(savedUser => {
         if (savedUser) {
-            res.status(200).send("ok");
+            res.redirect('/login.html');
         }
     })
         .catch(err => {
@@ -65,12 +73,12 @@ router.post('/login', function (req, res, next) {
     User_1.User.findOne({ email: req.body.email })
         .then(user => {
         if (!user) {
-            res.status(403).send("Email not found.");
+            res.status(403).send("Invalid credentials");
             return;
         }
         else {
             if (user.password == null) {
-                res.status(403).send("Password not found.");
+                res.status(403).send("Invalid credentials");
                 return;
             }
             bcrypt_1.default.compare(req.body.password, user.password, (err, result) => {
@@ -90,7 +98,7 @@ router.post('/login', function (req, res, next) {
                     });
                 }
                 else {
-                    res.status(403).send("Incorrect password.");
+                    res.status(403).send("Invalid credentials");
                 }
             });
         }

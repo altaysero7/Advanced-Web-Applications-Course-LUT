@@ -7,10 +7,19 @@ import { body, validationResult } from 'express-validator';
 import { User } from '../models/User';
 import jwt from 'jsonwebtoken';
 const router = express.Router();
+router.use(express.urlencoded({ extended: true }));
 
 interface userType {
     email: string;
     password: string;
+}
+
+interface validationError {
+    type: string;
+    value: string;
+    msg: string;
+    path: string;
+    location: string;
 }
 
 const registrationValidation = [
@@ -29,12 +38,18 @@ const registrationValidation = [
 router.post('/register', registrationValidation, function (req: any, res: any, next: any) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
+        const customErrors = errors.array() as validationError[];
+        const hasPasswordError = customErrors.some(error => error.path === 'password');
+        if (hasPasswordError) {
+            return res.status(403).send("Password is not strong enough");
+        } else {
+            return res.status(403).send("Invalid email structure");
+        }
     }
     User.findOne({ email: req.body.email })
         .then(async user => {
             if (user) {
-                res.status(403).send("Email already in use.");
+                res.status(403).send("Email already in use");
                 return;
             } else {
                 const hashedPassword = await bcrypt.hash(req.body.password, 10);
@@ -47,7 +62,7 @@ router.post('/register', registrationValidation, function (req: any, res: any, n
         })
         .then(savedUser => {
             if (savedUser) {
-                res.status(200).send("ok");
+                res.redirect('/login.html');
             }
         })
         .catch(err => {
@@ -60,11 +75,11 @@ router.post('/login', function (req, res, next) {
     User.findOne({ email: req.body.email })
         .then(user => {
             if (!user) {
-                res.status(403).send("Email not found.");
+                res.status(403).send("Invalid credentials");
                 return;
             } else {
                 if (user.password == null) {
-                    res.status(403).send("Password not found.");
+                    res.status(403).send("Invalid credentials");
                     return;
                 }
                 bcrypt.compare(req.body.password, user.password as string, (err, result) => {
@@ -88,7 +103,7 @@ router.post('/login', function (req, res, next) {
                             }
                         );
                     } else {
-                        res.status(403).send("Incorrect password.");
+                        res.status(403).send("Invalid credentials");
                     }
                 });
             }

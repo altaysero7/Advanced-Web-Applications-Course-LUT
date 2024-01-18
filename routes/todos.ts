@@ -15,11 +15,11 @@ router.post('/', passport.authenticate('jwt', { session: false }), function (req
     Todo.findOne({ user: user._id })
         .then(todo => {
             if (todo?.items) {
-                // Existing todo
+                // Existing todo(s)
                 todo.items = todo.items.concat(newTodos.map(String));
                 return todo.save();
             } else {
-                 // New todo
+                // New todo
                 const newTodo = new Todo({
                     user: user._id,
                     items: newTodos
@@ -30,6 +30,25 @@ router.post('/', passport.authenticate('jwt', { session: false }), function (req
         .then(savedTodo => {
             if (savedTodo) {
                 res.status(200).send("ok");
+            }
+        })
+        .catch(err => {
+            next(err);
+        });
+});
+
+/* GET all todos. */
+router.get('/list', passport.authenticate('jwt', { session: false }), function (req, res, next) {
+    const user = req.user as {
+        _id?: ObjectId,
+    };
+    Todo.findOne({ user: user._id })
+        .then(todo => {
+            if (todo?.items) {
+                res.json(todo.items);
+                return;
+            } else {
+                res.json("EMPTY LIST");
             }
         })
         .catch(err => {

@@ -7,7 +7,7 @@ exports.Todo = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
 const Schema = mongoose_1.default.Schema;
 const todoSchema = new Schema({
-    user: [{ type: mongoose_1.default.Schema.Types.ObjectId, ref: 'User' }],
+    user: { type: mongoose_1.default.Schema.Types.ObjectId, ref: 'User' },
     items: [String]
 });
 const Todo = mongoose_1.default.model('Todo', todoSchema);

@@ -18,10 +18,11 @@ db.on('error', console.error.bind(console, 'MongoDB connection error:'));
 const app = (0, express_1.default)();
 const port = 3000;
 app.use(express_1.default.json());
+app.use(express_1.default.static('public'));
 (0, passport_config_1.setupAuthentication)(passport_1.default);
 app.use(passport_1.default.initialize());
 app.get('/', (req, res) => {
-    res.send('Hello World!');
+    res.redirect('/index.html');
 });
 app.use('/api/user', users_1.default);
 app.use('/api/private', private_1.default);
