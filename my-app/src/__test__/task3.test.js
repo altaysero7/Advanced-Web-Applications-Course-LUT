@@ -1,14 +1,37 @@
-import { render } from "@testing-library/react";
-import MyList from "../components/MyList";
+import { render, waitFor } from "@testing-library/react";
+import Header from "../components/Header";
+import React from "react";
+import { MemoryRouter } from "react-router-dom";
+import "@testing-library/jest-dom";
+import { I18nextProvider } from "react-i18next";
+import i18n from "./i18n";
 
-test("List takes props", () => {
-  let items = [
-    { id: "1", text: "item 1" },
-    { id: "2", text: "item 2" },
-  ];
-  let props = { header: "Jou", items: items };
-  let { getByText } = render(<MyList {...props} />);
-  expect(getByText(/jou/i)).toBeInTheDocument();
-  expect(getByText(/item 1/i)).toBeInTheDocument();
-  expect(getByText(/item 2/i)).toBeInTheDocument();
+jest.mock("@mui/material/AppBar", () => (props) => (
+  <div data-testid="AppBar">{props.children}</div>
+));
+
+test("App has a material-UI button", async () => {
+  let { getAllByRole, getByTestId } = render(
+    <React.Suspense fallback="loading">
+      <MemoryRouter initialEntries={["/"]}>
+        <I18nextProvider i18n={i18n}>
+          <Header />
+        </I18nextProvider>
+      </MemoryRouter>
+    </React.Suspense>
+  );
+  await waitFor(
+    () => {
+      getByTestId("AppBar");
+    },
+    { timeout: 6000 }
+  );
+  expect(getByTestId("AppBar")).toBeInTheDocument();
+  const links = getAllByRole("link");
+  expect(
+    links.find((link) => link.getAttribute("href") === "/about")
+  ).toBeInTheDocument();
+  expect(
+    links.find((link) => link.getAttribute("href") === "/")
+  ).toBeInTheDocument();
 });

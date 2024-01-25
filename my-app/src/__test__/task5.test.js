@@ -1,24 +1,27 @@
-import { render, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import MyContainer from "../components/MyContainer";
+import React from "react";
+import { render } from "@testing-library/react";
+import MyHOC from "../components/MyHOC";
+import "@testing-library/jest-dom/extend-expect";
 
-jest.setTimeout(10000);
+test("Wraps element with a div that has class 'wrapper'", async () => {
+  const Component = ({ name }) => {
+    return <div data-testid="component"> Hello {name}!</div>;
+  };
 
-test("conditional rendering", async () => {
-  let { getAllByRole } = render(<MyContainer />);
-  expect(getAllByRole("listitem")[0].style.textDecoration).toBe("");
+  const wrappedWithName = MyHOC(Component, { name: "Kalle" });
 
-  //Clicking the first item in the list
-  userEvent.click(getAllByRole("listitem")[0]);
+  const { getByText, getByTestId } = render(wrappedWithName);
 
-  //wrapping the test for timeout, because it might take long to set the right
-  //style and re-render it.
-  await waitFor(
-    () => {
-      expect(getAllByRole("listitem")[0].style.textDecoration).toBe(
-        "line-through"
-      );
-    },
-    { timeout: 6000 }
+  expect(getByText(/Hello Kalle!/i)).toBeInTheDocument();
+  expect(getByTestId("component").parentElement).toHaveClass("wrapper");
+});
+
+test("Should also wrap with a div that has class 'wrapper'", async () => {
+  const Component = ({ name }) => (
+    <p data-testid="component2"> My name is {name}!</p>
   );
+  const wrappedWithName = MyHOC(Component, { name: "Mikko" });
+  const { getByText, getByTestId } = render(wrappedWithName);
+  expect(getByText(/My name is Mikko!/i)).toBeInTheDocument();
+  expect(getByTestId("component2").parentElement).toHaveClass("wrapper");
 });
