@@ -1,19 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 
+interface IBook {
+    name: string;
+    author: string;
+    pages: number;
+}
+
 function BookDetails() {
-    const [book, setBook] = useState('');
-    const { bookName } = useParams();
+    const [book, setBook] = useState<IBook | null>(null);
+    const { bookName } = useParams<{ bookName: string }>();
 
     useEffect(() => {
         const fetchBook = async () => {
             try {
                 const response = await fetch(`/api/book/${bookName}`);
                 if (response.ok) {
-                    const data = await response.json();
+                    const data: IBook = await response.json();
                     setBook(data);
                 }
-            } catch (error) {
+            } catch (error: any) {
                 console.error('Error while fetching book details:', error);
             }
         };

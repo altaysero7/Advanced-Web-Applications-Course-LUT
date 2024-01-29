@@ -1,12 +1,18 @@
-const express = require('express');
-const { Book } = require('../mongodb/models/Books');
+import express, { Request, Response, NextFunction } from 'express';
+import { Book } from '../mongodb/models/Books';
 const router = express.Router();
 
+interface IBook {
+    author: string;
+    name: string;
+    pages: number;
+    save: () => Promise<IBook>;
+}
 
 /* POST book. */
-router.post('/', (req, res, next) => {
+router.post('/', (req: Request, res: Response, next: NextFunction) => {
     Book.findOne({ name: req.body.name })
-        .then(book => {
+        .then((book: IBook | null) => {
             if (book) {
                 res.status(403).send("Book already in the database");
                 return;
@@ -15,34 +21,34 @@ router.post('/', (req, res, next) => {
                     author: req.body.author,
                     name: req.body.name,
                     pages: req.body.pages
-                });
+                }) as IBook;
                 return newBook.save();
             }
         })
-        .then(savedBook => {
+        .then((savedBook: IBook | undefined) => {
             if (savedBook) {
                 res.status(200).send("ok");
             }
         })
-        .catch(err => {
+        .catch((err: any) => {
             next(err);
         });
 });
 
 /* GET book. */
-router.get('/:bookName', (req, res, next) => {
+router.get('/:bookName', (req: Request, res: Response, next: NextFunction) => {
     Book.findOne({ name: req.params.bookName })
-        .then(book => {
+        .then((book: IBook | null) => {
             if (book) {
-                return res.status(200).json(book)
+                res.status(200).json(book)
             } else {
                 res.status(404).send("Book not found");
                 return;
             }
         })
-        .catch(err => {
+        .catch((err: any) => {
             next(err);
         });
 });
 
-module.exports = router;
+export default router;
