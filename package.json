@@ -13,5 +13,9 @@
     "start": "cd server && npm start"
   },
   "author": "Serhat Altay",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^3.0.3",
+    "ts-node": "^10.9.2"
+  }
 }

@@ -3,11 +3,18 @@ import path from 'path';
 import cookieParser from 'cookie-parser';
 import logger from 'morgan';
 import mongoose from 'mongoose';
+import passport from 'passport';
 import cors from 'cors';
 import { Request, Response } from 'express';
-import booksRouter from './routes/books';
 
-const mongoDB = "mongodb://127.0.0.1:27017/testdb";
+import userAccountRouter from './routes/userAccount';
+import userInfoRouter from './routes/userInfo';
+import allProfilesRouter from './routes/allProfiles';
+import userInteractions from './routes/userInteractions';
+
+import { setupAuthentication } from './passport-config';
+
+const mongoDB = "mongodb+srv://allUsers:cwTeItQS6d5l1fdu@cluster0.wrwdzn2.mongodb.net/";
 mongoose.connect(mongoDB);
 mongoose.Promise = global.Promise;
 const db = mongoose.connection;
@@ -20,7 +27,13 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-app.use('/api/book', booksRouter);
+setupAuthentication(passport);
+app.use(passport.initialize());
+
+app.use('/api/user/account', userAccountRouter);
+app.use('/api/user/info', userInfoRouter);
+app.use('/api/allProfiles', allProfilesRouter);
+app.use('/api/user/interactions', userInteractions);
 
 app.use('/api/*', (req: Request, res: Response) => {
     res.status(404).send('API endpoint not found');
