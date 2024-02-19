@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const LoginPage: React.FC = () => {
+interface LoginPageProps {
+    onLoginSuccess: () => void;
+}
+
+const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
     const [email, setEmail] = useState<string>('');
     const [password, setPassword] = useState<string>('');
     const [error, setError] = useState<string>('');
@@ -28,6 +32,7 @@ const LoginPage: React.FC = () => {
             .then(data => {
                 if (data.token) {
                     localStorage.setItem("auth_token", data.token);
+                    onLoginSuccess();
                     navigate(`/user/${email}`);
                 }
             })

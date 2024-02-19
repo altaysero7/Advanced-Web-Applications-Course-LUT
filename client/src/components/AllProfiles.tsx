@@ -25,7 +25,6 @@ interface ProfileStatus {
 function AllProfiles({ currentUserEmail }: { currentUserEmail: string | undefined }) {
     const [profiles, setProfiles] = useState<Profile[]>([]);
     const [status, setStatus] = useState<ProfileStatus>({});
-    const [error, setError] = useState<string>('');
 
     useEffect(() => {
         fetch('/api/allProfiles', {
@@ -36,11 +35,10 @@ function AllProfiles({ currentUserEmail }: { currentUserEmail: string | undefine
             .then(response => response.json())
             .then(data => {
                 if (data) {
-                    console.log('All profiles:', data);
                     setProfiles(data.filter((profile: Profile) => profile.email !== currentUserEmail)); // Filter out the current user's profile
                 }
             })
-            .catch(error => setError('Error fetching profiles: ' + error.message));
+            .catch(error => console.error('Error fetching profiles: ' + error.message));
     }, [currentUserEmail]);
 
     useEffect(() => {
@@ -50,14 +48,25 @@ function AllProfiles({ currentUserEmail }: { currentUserEmail: string | undefine
                     'Authorization': `Bearer ${authToken}`,
                 },
             })
-            .then(response => response.json())
-            .then(data => {
-                const updatedStatus: ProfileStatus = {};
-                (data.liked as string[]).forEach(userId => { updatedStatus[userId] = 'liked'; });
-                (data.disliked as string[]).forEach(userId => { updatedStatus[userId] = 'disliked'; });
-                setStatus(updatedStatus);
-            })
-            .catch(error => setError('Error fetching interactions: ' + error.message));
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    } else {
+                        return response.text();
+                    }
+                })
+                .then(data => {
+                    if (typeof data === 'string') {
+                        console.error('No interactions for this user:', data);
+                        return;
+                    }
+                    console.log('Interactions from AllProfiles:', data);
+                    const updatedStatus: ProfileStatus = {};
+                    (data.liked as string[]).forEach(userId => { updatedStatus[userId] = 'liked'; });
+                    (data.disliked as string[]).forEach(userId => { updatedStatus[userId] = 'disliked'; });
+                    setStatus(updatedStatus);
+                })
+                .catch(error => console.error('Error fetching interactions: ' + error.message));
         }
     }, [currentUserEmail]);
 
@@ -130,7 +139,6 @@ function AllProfiles({ currentUserEmail }: { currentUserEmail: string | undefine
                     </div>
                 ))}
             </div>
-            {error && <div className="alert alert-danger" role="alert">{error}</div>}
         </div>
     );
 }

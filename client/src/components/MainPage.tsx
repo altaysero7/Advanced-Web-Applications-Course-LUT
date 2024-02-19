@@ -1,38 +1,52 @@
 import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import Dropdown from 'react-bootstrap/Dropdown';
-import UpdateUserInfo from './UpdateUserInfo'
+import { useParams } from 'react-router-dom';
+import { Tab, Nav, Container, Row, Col } from 'react-bootstrap';
+import UpdateUserInfo from './UpdateUserInfo';
 import AllProfiles from './AllProfiles';
+import UserChats from './UserChats';
+import '../styles/mainPage.css';
 
 function MainPage() {
     const { userEmail } = useParams();
-    const navigate = useNavigate();
-    const [showUpdateForm, setShowUpdateForm] = useState(false);
-    const [showOtherProfiles, setShowOtherProfiles] = useState(false);
+    const [activeKey, setActiveKey] = useState('profiles');
 
-    const handleLogout = () => {
-        localStorage.removeItem("auth_token");
-        navigate('/');
+    const renderActiveTabContent = () => {
+        switch (activeKey) {
+            case 'profiles':
+                return <AllProfiles currentUserEmail={userEmail} />;
+            case 'updateForm':
+                return <UpdateUserInfo userEmail={userEmail} />;
+            case 'chats':
+                return <UserChats userEmail={userEmail} />;
+        }
     };
 
     return (
-        <div>
-            <h2>Welcome to the main page, {userEmail}!</h2>
-            <Dropdown>
-                <Dropdown.Toggle variant="success" id="dropdown-basic">
-                    Menu
-                </Dropdown.Toggle>
-
-                <Dropdown.Menu>
-                    <Dropdown.Item onClick={() => showOtherProfiles ? setShowOtherProfiles(false) : setShowOtherProfiles(true)}>Match with others</Dropdown.Item>
-                    <Dropdown.Item onClick={() => showUpdateForm ? setShowUpdateForm(false) : setShowUpdateForm(true)}>Edit your information</Dropdown.Item>
-                    <Dropdown.Item href="#/chats">List your chats</Dropdown.Item>
-                    <Dropdown.Item onClick={handleLogout}>Logout</Dropdown.Item>
-                </Dropdown.Menu>
-            </Dropdown>
-            {showOtherProfiles && <AllProfiles currentUserEmail={userEmail} />}
-            {showUpdateForm && <UpdateUserInfo userEmail={userEmail} />}
-        </div>
+        <Container className="mt-5">
+            <h2 className="mb-3">Welcome, {userEmail}</h2>
+            <Tab.Container activeKey={activeKey} onSelect={(key) => setActiveKey(key as string)}>
+                <Row>
+                    <Col sm={3}>
+                        <Nav variant="pills" className="flex-column">
+                            <Nav.Item>
+                                <Nav.Link eventKey="profiles">Match with others</Nav.Link>
+                            </Nav.Item>
+                            <Nav.Item>
+                                <Nav.Link eventKey="updateForm">Edit your information</Nav.Link>
+                            </Nav.Item>
+                            <Nav.Item>
+                                <Nav.Link eventKey="chats">List your chats</Nav.Link>
+                            </Nav.Item>
+                        </Nav>
+                    </Col>
+                    <Col sm={9}>
+                        <Tab.Content>
+                            {renderActiveTabContent()}
+                        </Tab.Content>
+                    </Col>
+                </Row>
+            </Tab.Container>
+        </Container>
     );
 }
 

@@ -107,4 +107,19 @@ router.post('/login', function (req, res, next) {
         })
 });
 
+/* GET user id */
+router.get('/:email', function (req, res, next) {
+    userAccount.findOne({ email: req.params.email })
+        .then(user => {
+            if (user) {
+                res.json({ id: user._id });
+            } else {
+                res.status(404).send("User not found");
+            }
+        })
+        .catch(err => {
+            next(err);
+        });
+});
+
 export default router;

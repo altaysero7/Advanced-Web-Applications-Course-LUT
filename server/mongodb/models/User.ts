@@ -18,7 +18,7 @@ const userInfoSchema = new Schema({
 });
 
 const userInteractionsSchema = new Schema({
-    user: { type: mongoose.Schema.Types.ObjectId, ref: 'Account' },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'Account' },
     liked: [String],
     disliked: [String],
     matched: [String],

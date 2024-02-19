@@ -13,10 +13,10 @@ router.post('/', function (req: any, res: any, next: any) {
             if (!user) {
                 return res.status(404).send("User not found");
             }
-            const query = { user: user._id };
+            const query = { userId: user._id };
             const update = {
                 $set: {
-                    user: user._id,
+                    userId: user._id,
                     email: req.body.email,
                     name: req.body.name,
                     surname: req.body.surname,
@@ -43,6 +43,22 @@ router.post('/', function (req: any, res: any, next: any) {
 /* GET user information. */
 router.get('/:email', function (req: any, res: any, next: any) {
     UserInfo.findOne({ email: req.params.email })
+        .then((userInfo) => {
+            if (userInfo) {
+                res.status(200).json(userInfo);
+            } else {
+                res.status(404).send("User info not found");
+                return;
+            }
+        })
+        .catch((err: any) => {
+            next(err);
+        });
+});
+
+/* GET user information by id. */
+router.get('/id/:id', function (req: any, res: any, next: any) {
+    UserInfo.findOne({ userId: req.params.id })
         .then((userInfo) => {
             if (userInfo) {
                 res.status(200).json(userInfo);

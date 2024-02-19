@@ -6,11 +6,15 @@ import mongoose from 'mongoose';
 import passport from 'passport';
 import cors from 'cors';
 import { Request, Response } from 'express';
+import { createServer } from "http";
+import { Server } from "socket.io";
+import { ChatMessage } from './mongodb/models/Chat';
 
 import userAccountRouter from './routes/userAccount';
 import userInfoRouter from './routes/userInfo';
 import allProfilesRouter from './routes/allProfiles';
-import userInteractions from './routes/userInteractions';
+import userInteractionsRouter from './routes/userInteractions';
+import userChatRouter from './routes/userChat';
 
 import { setupAuthentication } from './passport-config';
 
@@ -33,10 +37,45 @@ app.use(passport.initialize());
 app.use('/api/user/account', userAccountRouter);
 app.use('/api/user/info', userInfoRouter);
 app.use('/api/allProfiles', allProfilesRouter);
-app.use('/api/user/interactions', userInteractions);
+app.use('/api/user/interactions', userInteractionsRouter);
+app.use('/api/chat', userChatRouter);
 
 app.use('/api/*', (req: Request, res: Response) => {
     res.status(404).send('API endpoint not found');
+});
+
+const server = createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: "http://localhost:3000",
+        methods: ["GET", "POST"]
+    }
+});
+
+io.on("connection", (socket) => {
+    console.log("A user connected!", socket.id);
+
+    socket.on("chat message", ({from, to, data}) => {
+        const newMessage = new ChatMessage({ // Saving the message to the database
+            from,
+            to,
+            data,
+        });
+        newMessage.save()
+            .then(() => {
+                console.log("Message saved to database");
+                io.emit("chat message", { from, to, data });
+            })
+            .catch(err => console.error("Error saving message:", err));
+    });
+
+    socket.on("disconnect", () => {
+        console.log("user disconnected");
+    });
+});
+
+server.listen(4000, () => {
+    console.log("listening on port 4000");
 });
 
 if (process.env.NODE_ENV === 'production') { //NODE_ENV=production npm start
