@@ -1,6 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPaperPlane } from '@fortawesome/free-solid-svg-icons';
+
 const authToken = localStorage.getItem('auth_token');
 const socket: Socket = io("http://localhost:4000");
 
@@ -23,6 +25,15 @@ const ChatBox: React.FC<ChatBoxProps> = ({ currentUserEmail, selectedUser }) => 
     const [currentMessage, setCurrentMessage] = useState<string>("");
     const [messages, setMessages] = useState<ChatHistory[]>([]);
     const [currentUserId, setCurrentUserId] = useState<string | undefined>("");
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    // Function to scroll to the latest message
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    // Invoke scrollToBottom whenever messages update
+    useEffect(scrollToBottom, [messages]);
 
     // Fetch current user's ID
     useEffect(() => {
@@ -45,7 +56,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ currentUserEmail, selectedUser }) => 
                 }
                 setCurrentUserId(user.id);
             })
-    }, [currentUserEmail]);
+    }, [currentUserEmail, selectedUser.id]);
 
     // Fetch chat history
     useEffect(() => {
@@ -102,29 +113,52 @@ const ChatBox: React.FC<ChatBoxProps> = ({ currentUserEmail, selectedUser }) => 
     };
 
     return (
-        <div className="card">
-            <div className="card-header">
-                Chat with {selectedUser.name}
-            </div>
-            <div className="card-body" style={{ height: '400px', overflowY: 'scroll' }}>
-                {messages.sort((a, b) => (a.timestamp && b.timestamp) ? new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime() : 0)
-                    .map((chat, index) => (
-                        <div key={index} className={`message ${chat.from === currentUserId ? 'text-end' : 'text-start'}`}>
-                            <div className={`badge ${chat.from === currentUserId ? 'bg-primary' : 'bg-secondary'}`}>
-                                {chat.data}
-                            </div>
-                            <p className="text-muted small">{new Date(chat.timestamp || '').toLocaleTimeString()}</p>
+        <div className="card" style={{ maxWidth: '400px', overflow: 'hidden' }}>
+            <div className="card-header">Chat with {selectedUser.name}</div>
+            <div className="card-body" style={{ height: '400px', overflowY: 'auto' }}>
+                {messages.map((msg, index) => (
+                    <div key={index} style={{
+                        textAlign: msg.from === currentUserId ? 'right' : 'left',
+                        marginBottom: '10px',
+                    }}>
+                        <span style={{
+                            display: 'inline-block',
+                            backgroundColor: msg.from === currentUserId ? '#007bff' : '#6c757d',
+                            color: 'white',
+                            borderRadius: '10px',
+                            padding: '5px 10px',
+                            maxWidth: '70%',
+                            wordBreak: 'break-word',
+                        }}>
+                            {msg.data}
+                        </span>
+                        <div style={{ fontSize: '0.75rem', marginTop: '5px' }}>
+                            {new Date(msg.timestamp || '').toLocaleTimeString()}
                         </div>
-                    ))}
+                    </div>
+                ))}
+                <div ref={messagesEndRef} />
             </div>
             <div className="card-footer">
                 <div className="input-group">
-                    <input type="text" className="form-control" placeholder="Type a message..." value={currentMessage} onChange={(e) => setCurrentMessage(e.target.value)} />
-                    <button className="btn btn-primary" type="button" onClick={sendMessage}>Send</button>
+                    <input
+                        type="text"
+                        className="form-control"
+                        placeholder="Type a message..."
+                        value={currentMessage}
+                        onChange={(e) => setCurrentMessage(e.target.value)}
+                        style={{ marginRight: '5px' }}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') sendMessage();
+                        }}
+                    />
+                    <button className="btn btn-primary" type="button" onClick={sendMessage}>
+                        Send <FontAwesomeIcon icon={faPaperPlane} />
+                    </button>
                 </div>
             </div>
         </div>
     );
-}
+};
 
 export default ChatBox;

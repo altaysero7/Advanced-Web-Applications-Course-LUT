@@ -1,7 +1,7 @@
 //Referencing: https://getbootstrap.com/docs/4.0/components/navbar/
 
 import './App.css';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import LoginPage from './components/LoginPage';
 import RegistrationPage from './components/RegistrationPage';
 import MainPage from './components/MainPage';
@@ -20,7 +20,7 @@ function App() {
   const handleLogout = () => {
     localStorage.removeItem('auth_token');
     setIsAuthenticated(false);
-    window.location.href = '/login';
+    window.location.href = '/';
   };
 
   console.log('Is authenticated:', isAuthenticated)

@@ -1,7 +1,10 @@
 // Referencing: https://getbootstrap.com/docs/4.0/components/alerts/
 
 import { useEffect, useState } from 'react';
-import '../styles/updateUserInfo.css';
+import { Form, Button, Container, Card, Row, Col, Toast } from 'react-bootstrap';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUser, faEnvelope, faBirthdayCake, faPizzaSlice, faPalette, faFilm } from '@fortawesome/free-solid-svg-icons';
+
 const authToken = localStorage.getItem('auth_token');
 
 function UpdateUserInfo({ userEmail }: { userEmail: string | undefined }) {
@@ -14,12 +17,14 @@ function UpdateUserInfo({ userEmail }: { userEmail: string | undefined }) {
         favoriteMovieGenre: '',
         email: userEmail
     });
-    const [error, setError] = useState<string>('');
-    const [success, setSuccess] = useState<string>('');
+    const [showToast, setShowToast] = useState(false);
+    const [toastMessage, setToastMessage] = useState<string>('');
+    const [isSuccess, setIsSuccess] = useState(true);
+
 
     useEffect(() => {
         fetchUserInfo(userEmail);
-    }, []);
+    }, [userEmail]);
 
     const fetchUserInfo = async (email: string | undefined) => {
         fetch(`/api/user/info/${email}`, {
@@ -46,7 +51,9 @@ function UpdateUserInfo({ userEmail }: { userEmail: string | undefined }) {
                 }
             })
             .catch(error => {
-                setError('Error fetching user info' + error);
+                setToastMessage(`Error fetching user info:  ${error}`);
+                setIsSuccess(false);
+                setShowToast(true);
             });
     };
 
@@ -79,54 +86,61 @@ function UpdateUserInfo({ userEmail }: { userEmail: string | undefined }) {
             },
             body: JSON.stringify(data),
         })
-        .then(async response => {
-            if (response.ok) {
-                return setSuccess(await response.text());
-            }
-        })
-        .catch(error => {
-            setError('Error updating user info: ' + error);
-        });
+            .then(response => {
+                if (response.ok) {
+                    setToastMessage('Your information has been updated successfully.');
+                    setIsSuccess(true);
+                    setShowToast(true);
+                } else {
+                    throw new Error('Failed to update information');
+                }
+            })
+            .catch(error => {
+                setToastMessage(`Error updating user info: ${error}`);
+                setIsSuccess(false);
+                setShowToast(true);
+            });
     };
 
-    const createInputField = (name: string, label: string, type = 'text') => (
-        <div className="mb-2">
-            <label htmlFor={`${name}Input`} className="form-label">{label}</label>
-            <input
+    const createInputField = (name: string, label: string, type = 'text', icon: any) => (
+        <Form.Group as={Col} md="6" className="mb-3" controlId={`form${name}`}>
+            <Form.Label><FontAwesomeIcon icon={icon} /> {label}</Form.Label>
+            <Form.Control
                 type={type}
-                className={`form-control ${name === 'email' ? 'read-only-input' : ''}`}
-                id={`${name}Input`}
                 name={name}
                 value={formData[name as keyof typeof formData]}
                 onChange={handleChange}
-                required
+                required={name !== 'email'}
                 disabled={name === 'email'}
+                placeholder={`Enter ${label}`}
+                style={name === 'email' ? { cursor: 'not-allowed' } : {}}
             />
-        </div>
+        </Form.Group>
     );
 
     return (
-        <div className="container mt-4">
-            <div className="row justify-content-center">
-                <div className="col-md-6">
-                    <form onSubmit={handleSubmit} className="card p-3 shadow-sm">
-                        <h3 className="text-center mb-3">Update User Information</h3>
-                        {createInputField('name', 'Name')}
-                        {createInputField('surname', 'Surname')}
-                        {createInputField('age', 'Age', 'number')}
-                        {createInputField('favoriteFood', 'Favorite Food')}
-                        {createInputField('favoriteColor', 'Favorite Color')}
-                        {createInputField('favoriteMovieGenre', 'Favorite Movie Genre')}
-                        {createInputField('email', 'Email', 'email')}
-                        <div className="text-center">
-                            <button type="submit" className="btn btn-primary mt-2">Update Information</button>
-                        </div>
-                    </form>
-                    {error && <div className="alert alert-danger" role="alert">{error}</div>}
-                    {success && <div className="alert alert-success" role="alert">{success}</div>}
-                </div>
-            </div>
-        </div>
+        <Container className="mt-5">
+            <Card className="shadow">
+                <Card.Body>
+                    <Card.Title className="text-center mb-4">Update User Information</Card.Title>
+                    <Form onSubmit={handleSubmit}>
+                        <Row>
+                            {createInputField('name', 'Name', 'text', faUser)}
+                            {createInputField('surname', 'Surname', 'text', faUser)}
+                            {createInputField('age', 'Age', 'number', faBirthdayCake)}
+                            {createInputField('favoriteFood', 'Favorite Food', 'text', faPizzaSlice)}
+                            {createInputField('favoriteColor', 'Favorite Color', 'text', faPalette)}
+                            {createInputField('favoriteMovieGenre', 'Favorite Movie Genre', 'text', faFilm)}
+                            {createInputField('email', 'Email', 'email', faEnvelope)}
+                        </Row>
+                        <Button variant="primary" type="submit" className="mt-3 w-100">Update Information</Button>
+                    </Form>
+                </Card.Body>
+            </Card>
+            <Toast onClose={() => setShowToast(false)} show={showToast} delay={3000} autohide style={{ position: 'fixed', bottom: '20px', right: '20px', color: 'black', backgroundColor: isSuccess ? 'green' : 'red' }}>
+                <Toast.Body>{toastMessage}</Toast.Body>
+            </Toast>
+        </Container>
     );
 }
 

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Alert, Button, Card, Container, Form } from 'react-bootstrap';
 
 interface LoginPageProps {
     onLoginSuccess: () => void;
@@ -42,23 +43,35 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
     };
 
     return (
-        <div className="container">
-            <div className="login">
-                <h2>Login Page</h2>
-                <form onSubmit={handleSubmit}>
-                    <label htmlFor="email"><strong>Email: </strong></label>
-                    <input type="email" name="email" placeholder="Enter Email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-                    <br />
-                    <label htmlFor="password"><strong>Password: </strong></label>
-                    <input type="password" name="password" placeholder="Enter Password" required value={password} onChange={(e) => setPassword(e.target.value)} />
-                    <br />
-                    <input type="submit" value="Login" />
-                </form>
-                {error && <div className="alert alert-danger" role="alert">{error}</div>}
-            </div>
-            <button onClick={() => navigate('/')}>Go back Home</button>
-        </div>
+        <Container className="d-flex justify-content-center align-items-center" style={{ minHeight: "100vh" }}>
+            <Card style={{ width: '400px' }} className="p-4">
+                <Card.Body>
+                    <h2 className="text-center mb-4">Login Page</h2>
+                    {error && <Alert variant="danger">{error}</Alert>}
+                    <Form onSubmit={handleSubmit}>
+                        <Form.Group className="mb-3" controlId="formBasicEmail">
+                            <Form.Label>Email address</Form.Label>
+                            <Form.Control type="email" placeholder="Enter email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+                        </Form.Group>
+
+                        <Form.Group className="mb-3" controlId="formBasicPassword">
+                            <Form.Label>Password</Form.Label>
+                            <Form.Control type="password" placeholder="Password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+                        </Form.Group>
+
+                        <div className="d-grid gap-2">
+                            <Button variant="primary" type="submit">
+                                Login
+                            </Button>
+                        </div>
+                    </Form>
+                </Card.Body>
+                <div className="text-center mt-2">
+                    <Button variant="link" onClick={() => navigate('/')}>Go back Home</Button>
+                </div>
+            </Card>
+        </Container>
     );
-}
+};
 
 export default LoginPage;
