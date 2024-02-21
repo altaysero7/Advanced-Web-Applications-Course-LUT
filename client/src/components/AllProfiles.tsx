@@ -1,5 +1,7 @@
+// Referencing: all the source codes, lecture slides and videos from the Advanced Web Applications course implemented by Erno Vanhala at LUT University in 2023-2024
 // Referencing: https://framerbook.com/animation/example-animations/ && https://www.geeksforgeeks.org/how-to-create-tinder-card-swipe-gesture-using-react-and-framer-motion/
 
+import React from 'react';
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -23,12 +25,16 @@ interface ProfileStatus {
     [userId: string]: 'liked' | 'disliked';
 }
 
-function AllProfiles({ currentUserEmail }: { currentUserEmail: string | undefined }) {
+interface AllProfilesProps {
+    currentUserEmail?: string;
+}
+
+const AllProfiles: React.FC<AllProfilesProps> = ({ currentUserEmail }) => {
     const [profiles, setProfiles] = useState<Profile[]>([]);
     const [status, setStatus] = useState<ProfileStatus>({});
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState<boolean>(true);
 
-
+    // Fetching all profiles except the current user's
     useEffect(() => {
         setIsLoading(true);
         fetch('/api/allProfiles', {
@@ -49,6 +55,7 @@ function AllProfiles({ currentUserEmail }: { currentUserEmail: string | undefine
             });
     }, [currentUserEmail]);
 
+    // Fetching the user's interactions
     useEffect(() => {
         if (currentUserEmail) {
             fetch(`/api/user/interactions/${currentUserEmail}`, {
@@ -68,22 +75,22 @@ function AllProfiles({ currentUserEmail }: { currentUserEmail: string | undefine
                         console.error('No interactions for this user:', data);
                         return;
                     }
-                    console.log('Interactions from AllProfiles:', data);
                     const updatedStatus: ProfileStatus = {};
-                    (data.liked as string[]).forEach(userId => { updatedStatus[userId] = 'liked'; });
-                    (data.disliked as string[]).forEach(userId => { updatedStatus[userId] = 'disliked'; });
+                    (data.liked as string[]).forEach((userId: string) => { updatedStatus[userId] = 'liked'; });
+                    (data.disliked as string[]).forEach((userId: string) => { updatedStatus[userId] = 'disliked'; });
                     setStatus(updatedStatus);
                 })
-                .catch(error => console.error('Error fetching interactions: ' + error.message));
+                .catch(error => console.error('Error fetching interactions: ' + error));
         }
     }, [currentUserEmail]);
 
-    const handleSwipe = (direction: string, interactedUserId: string) => {
-        console.log('Swiped', direction, interactedUserId);
+    // Handling the swipe action
+    const handleSwipe = (direction: 'like' | 'dislike', interactedUserId: string): void => {
         setStatus(prev => ({ ...prev, [interactedUserId]: direction === 'like' ? 'liked' : 'disliked' }));
 
         const data = direction === 'like' ? { liked: [interactedUserId] } : { disliked: [interactedUserId] };
 
+        // Sending the interaction data to the server
         fetch('/api/user/interactions', {
             method: 'POST',
             headers: {
@@ -96,15 +103,12 @@ function AllProfiles({ currentUserEmail }: { currentUserEmail: string | undefine
             }),
         })
             .then(response => response.text())
-            .then(data => {
-                console.log('Success:', data);
-            })
             .catch((error) => {
                 console.error('Error:', error);
             });
     };
 
-    // Enhanced card appearance and swipe feedback
+    // Making the cards swipeable and cool looking
     const cardVariants = {
         initial: { scale: 0.95, opacity: 0 },
         animate: { scale: 1, opacity: 1, transition: { duration: 0.5 } },

@@ -1,13 +1,13 @@
-// Referencing https://express-validator.github.io/docs/6.6.0/
+// Referencing: all the source codes, lecture slides and videos from the Advanced Web Applications course implemented by Erno Vanhala at LUT University in 2023-2024
 
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import { UserInfo } from '../mongodb/models/User';
 // import passport from 'passport';
 const router = express.Router();
 router.use(express.urlencoded({ extended: true }));
 
 /* GET all profiles. */
-router.get('/', async (req: any, res: any, next: any) => {
+router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     UserInfo.find({})
         .then((profiles) => {
             if (profiles) {

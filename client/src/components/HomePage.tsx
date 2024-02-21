@@ -1,8 +1,12 @@
+// Referencing: all the source codes, lecture slides and videos from the Advanced Web Applications course implemented by Erno Vanhala at LUT University in 2023-2024
+// Referencing: https://getbootstrap.com/docs/4.0/components
+
+import React from 'react';
 import { Button, Container, Row, Col } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import '../styles/HomePage.css';
 
-function HomePage() {
+const HomePage: React.FC = () => {
     const navigate = useNavigate();
 
     return (

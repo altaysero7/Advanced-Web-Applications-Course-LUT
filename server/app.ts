@@ -1,3 +1,5 @@
+// Referencing: all the source codes, lecture slides and videos from the Advanced Web Applications course implemented by Erno Vanhala at LUT University in 2023-2024
+
 import express from 'express';
 import path from 'path';
 import cookieParser from 'cookie-parser';
@@ -17,6 +19,12 @@ import userInteractionsRouter from './routes/userInteractions';
 import userChatRouter from './routes/userChat';
 
 import { setupAuthentication } from './passport-config';
+
+interface ChatMessagePayload {
+    from: string;
+    to: string;
+    data: string;
+}
 
 const mongoDB = "mongodb+srv://allUsers:cwTeItQS6d5l1fdu@cluster0.wrwdzn2.mongodb.net/";
 mongoose.connect(mongoDB);
@@ -44,6 +52,7 @@ app.use('/api/*', (req: Request, res: Response) => {
     res.status(404).send('API endpoint not found');
 });
 
+// Creating a server to enable chat functionality between users
 const server = createServer(app);
 const io = new Server(server, {
     cors: {
@@ -53,31 +62,23 @@ const io = new Server(server, {
 });
 
 io.on("connection", (socket) => {
-    console.log("A user connected!", socket.id);
-
-    socket.on("chat message", ({from, to, data}) => {
-        const newMessage = new ChatMessage({ // Saving the message to the database
-            from,
-            to,
-            data,
-        });
+    socket.on("chat message", (payload: ChatMessagePayload) => {
+        const newMessage = new ChatMessage(payload); // Saving the message to the database
         newMessage.save()
             .then(() => {
                 console.log("Message saved to database");
-                io.emit("chat message", { from, to, data });
+                io.emit("chat message", payload);
             })
             .catch(err => console.error("Error saving message:", err));
     });
-
-    socket.on("disconnect", () => {
-        console.log("user disconnected");
-    });
+    socket.on("disconnect", () => {});
 });
 
 server.listen(4000, () => {
-    console.log("listening on port 4000");
+    console.log("chat server listening on port 4000");
 });
 
+// Serving static assets if in production and else enable CORS
 if (process.env.NODE_ENV === 'production') { //NODE_ENV=production npm start
     app.use(express.static(path.resolve('..', 'client', 'build')));
     app.get('*', (req: Request, res: Response) =>

@@ -1,3 +1,5 @@
+// Referencing: all the source codes, lecture slides and videos from the Advanced Web Applications course implemented by Erno Vanhala at LUT University in 2023-2024
+
 import mongoose from 'mongoose';
 const Schema = mongoose.Schema;
 

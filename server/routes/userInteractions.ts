@@ -1,7 +1,7 @@
-// Referencing https://express-validator.github.io/docs/6.6.0/
+// Referencing: all the source codes, lecture slides and videos from the Advanced Web Applications course implemented by Erno Vanhala at LUT University in 2023-2024
 
 import express, { Request, Response, NextFunction } from 'express';
-import { userAccount, UserInfo, UserInteractions } from '../mongodb/models/User';
+import { userAccount, UserInteractions } from '../mongodb/models/User';
 // import passport from 'passport';
 const router = express.Router();
 router.use(express.urlencoded({ extended: true }));
@@ -9,14 +9,20 @@ router.use(express.urlencoded({ extended: true }));
 /* POST user interaction. */
 router.post('/', async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const user = await userAccount.findOne({ email: req.body.email });
+        const { email, liked, disliked } = req.body;
+
+        const user = await userAccount.findOne({ email });
         if (!user) {
-            return res.status(404).send("User not found");
+            res.status(404).send("User not found");
+            return;
         }
 
-        const likedUsers = Array.isArray(req.body.liked) ? req.body.liked : req.body.liked ? [req.body.liked] : [];
-        const dislikedUsers = Array.isArray(req.body.disliked) ? req.body.disliked : req.body.disliked ? [req.body.disliked] : [];
+        // Checking if the input is an array or a single string
+        const processIds = (ids: string | string[] | undefined): string[] =>
+            Array.isArray(ids) ? ids : ids ? [ids] : [];
 
+        const likedUsers = processIds(liked);
+        const dislikedUsers = processIds(disliked);
 
         // Updating the liked and disliked lists
         await UserInteractions.findOneAndUpdate(
@@ -64,14 +70,18 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
 /* GET user interactions. */
 router.get('/:email', async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const user = await userAccount.findOne({ email: req.params.email });
+        const { email } = req.params;
+
+        const user = await userAccount.findOne({ email });
         if (!user) {
-            return res.status(404).send("User not found");
+            res.status(404).send("User not found");
+            return;
         }
 
         const interactions = await UserInteractions.findOne({ userId: user._id });
         if (!interactions) {
-            return res.status(404).send("Interactions not found");
+            res.status(404).send("Interactions not found");
+            return;
         }
 
         res.status(200).json({

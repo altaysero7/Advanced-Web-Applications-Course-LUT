@@ -1,31 +1,33 @@
-// Referencing https://express-validator.github.io/docs/6.6.0/
+// Referencing: all the source codes, lecture slides and videos from the Advanced Web Applications course implemented by Erno Vanhala at LUT University in 2023-2024
 
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import { userAccount, UserInfo } from '../mongodb/models/User';
 // import passport from 'passport';
 const router = express.Router();
 router.use(express.urlencoded({ extended: true }));
 
+interface UserRequestBody {
+    email: string;
+    name: string;
+    surname: string;
+    age: number;
+    favoriteFood: string;
+    favoriteColor: string;
+    favoriteMovieGenre: string;
+}
+
 /* POST user information. */
-router.post('/', function (req: any, res: any, next: any) {
-    userAccount.findOne({ email: req.body.email })
+router.post('/', function (req: Request, res: Response, next: NextFunction) {
+    const body: UserRequestBody = req.body;
+
+    userAccount.findOne({ email: body.email })
         .then((user) => {
             if (!user) {
-                return res.status(404).send("User not found");
+                res.status(404).send("User not found");
+                return;
             }
             const query = { userId: user._id };
-            const update = {
-                $set: {
-                    userId: user._id,
-                    email: req.body.email,
-                    name: req.body.name,
-                    surname: req.body.surname,
-                    age: req.body.age,
-                    favoriteFood: req.body.favoriteFood,
-                    favoriteColor: req.body.favoriteColor,
-                    favoriteMovieGenre: req.body.favoriteMovieGenre
-                }
-            };
+            const update = { $set: { ...body, userId: user._id } }; // everything in the body will be inserted
             const options = { upsert: true, new: true, setDefaultsOnInsert: true }; // upsert: create if not found, new: return updated document when true, setDefaultsOnInsert: set default values if not found
 
             return UserInfo.findOneAndUpdate(query, update, options);
@@ -33,6 +35,7 @@ router.post('/', function (req: any, res: any, next: any) {
         .then(updatedOrNewDocument => {
             if (updatedOrNewDocument) {
                 res.status(200).send("User info successfully updated");
+                return;
             }
         })
         .catch(err => {
@@ -41,7 +44,7 @@ router.post('/', function (req: any, res: any, next: any) {
 });
 
 /* GET user information. */
-router.get('/:email', function (req: any, res: any, next: any) {
+router.get('/:email', function (req: Request, res: Response, next: NextFunction) {
     UserInfo.findOne({ email: req.params.email })
         .then((userInfo) => {
             if (userInfo) {
@@ -57,7 +60,7 @@ router.get('/:email', function (req: any, res: any, next: any) {
 });
 
 /* GET user information by id. */
-router.get('/id/:id', function (req: any, res: any, next: any) {
+router.get('/id/:id', function (req: Request, res: Response, next: NextFunction) {
     UserInfo.findOne({ userId: req.params.id })
         .then((userInfo) => {
             if (userInfo) {

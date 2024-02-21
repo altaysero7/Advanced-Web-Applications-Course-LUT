@@ -1,4 +1,7 @@
-import { useEffect, useState } from 'react';
+// Referencing: all the source codes, lecture slides and videos from the Advanced Web Applications course implemented by Erno Vanhala at LUT University in 2023-2024
+// Referencing: https://getbootstrap.com/docs/5.0/components/navs-tabs/
+
+import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Tab, Nav, Container, Row, Col } from 'react-bootstrap';
 import UpdateUserInfo from './UpdateUserInfo';
@@ -10,24 +13,24 @@ import { faSmileBeam } from '@fortawesome/free-solid-svg-icons';
 
 const authToken = localStorage.getItem('auth_token');
 
-function MainPage() {
+const MainPage: React.FC = () => {
     const { userEmail } = useParams();
-    const [activeKey, setActiveKey] = useState('profiles');
-    const [userName, setuserName] = useState('');
+    const [activeKey, setActiveKey] = useState<string>('profiles');
+    const [userName, setuserName] = useState<string>('');
 
-
+    // Rendering the active tab content
     const renderActiveTabContent = () => {
         switch (activeKey) {
             case 'profiles':
                 return <AllProfiles currentUserEmail={userEmail} />;
             case 'updateForm':
-                return <UpdateUserInfo userEmail={userEmail} />;
+                return <UpdateUserInfo userEmail={userEmail} onUserInfoUpdated={handleUserInfoUpdated} />;
             case 'chats':
                 return <UserChats userEmail={userEmail} />;
         }
     };
 
-
+    // Fetching the user's name
     useEffect(() => {
         fetch(`/api/user/info/${userEmail}`, {
             headers: {
@@ -51,6 +54,10 @@ function MainPage() {
             .catch(error => console.error('Error fetching user name:', error));
     }, [userEmail]);
 
+    // Handling the updated user information from the UpdateUserInfo component
+    const handleUserInfoUpdated = (updatedName: string) => {
+        setuserName(updatedName);
+    };
 
     return (
         <Container className="mt-5">

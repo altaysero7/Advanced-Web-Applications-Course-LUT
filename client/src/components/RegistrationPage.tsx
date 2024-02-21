@@ -1,3 +1,6 @@
+// Referencing: all the source codes, lecture slides and videos from the Advanced Web Applications course implemented by Erno Vanhala at LUT University in 2023-2024
+// Referencing: https://getbootstrap.com/docs/4.0/components
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Form, Button, Container, Alert, Card } from 'react-bootstrap';
@@ -10,21 +13,23 @@ const RegistrationPage: React.FC = () => {
     const [registrationSuccess, setRegistrationSuccess] = useState<boolean>(false);
     const navigate = useNavigate();
 
+    // Redirecting to the login page after successful registration
     useEffect(() => {
         if (registrationSuccess) {
             const timer = setTimeout(() => {
                 navigate('/login');
-            }, 3000); // Redirect after 3 seconds
+            }, 3000); // Redirecting after 3 seconds
 
             return () => clearTimeout(timer);
         }
     }, [registrationSuccess, navigate]);
 
-    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    // Registering the user
+    const handleSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
         event.preventDefault();
+        const registrationData: { email: string; password: string } = { email, password };
 
-        const registrationData = { email, password };
-
+        // Sending the registration request
         fetch("/api/user/account/register", {
             method: "POST",
             headers: {

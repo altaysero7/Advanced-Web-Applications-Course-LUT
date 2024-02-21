@@ -1,10 +1,13 @@
+// Referencing: all the source codes, lecture slides and videos from the Advanced Web Applications course implemented by Erno Vanhala at LUT University in 2023-2024
+// Referencing: utilized the Bootstrap library from https://getbootstrap.com/
+
 import React, { useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPaperPlane } from '@fortawesome/free-solid-svg-icons';
 
 const authToken = localStorage.getItem('auth_token');
-const socket: Socket = io("http://localhost:4000");
+const socket: Socket = io("http://localhost:4000"); // Connecting to the chat server
 
 interface ChatHistory {
     from: string | undefined;
@@ -24,18 +27,16 @@ interface ChatBoxProps {
 const ChatBox: React.FC<ChatBoxProps> = ({ currentUserEmail, selectedUser }) => {
     const [currentMessage, setCurrentMessage] = useState<string>("");
     const [messages, setMessages] = useState<ChatHistory[]>([]);
-    const [currentUserId, setCurrentUserId] = useState<string | undefined>("");
+    const [currentUserId, setCurrentUserId] = useState<string>("")
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    // Function to scroll to the latest message
+    // Chat is scrolling to the latest message
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
-
-    // Invoke scrollToBottom whenever messages update
     useEffect(scrollToBottom, [messages]);
 
-    // Fetch current user's ID
+    // Fetching current user's ID
     useEffect(() => {
         fetch(`/api/user/account/${currentUserEmail}`, {
             headers: {
@@ -56,9 +57,9 @@ const ChatBox: React.FC<ChatBoxProps> = ({ currentUserEmail, selectedUser }) => 
                 }
                 setCurrentUserId(user.id);
             })
-    }, [currentUserEmail, selectedUser.id]);
+    }, [currentUserEmail]);
 
-    // Fetch chat history
+    // Fetching chat history
     useEffect(() => {
         fetch(`/api/chat/history/${currentUserId}/${selectedUser.id}`, {
             headers: {
@@ -87,6 +88,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ currentUserEmail, selectedUser }) => 
             .catch(error => console.error('Error fetching chat history:', error));
     }, [currentUserId, selectedUser.id]);
 
+    // Listening for new messages
     useEffect(() => {
         socket.on("chat message", (chat: ChatHistory) => {
             if ((chat.from === selectedUser.id && chat.to === currentUserId) ||
@@ -94,12 +96,12 @@ const ChatBox: React.FC<ChatBoxProps> = ({ currentUserEmail, selectedUser }) => 
                 setMessages((prevMessages) => [...prevMessages, { ...chat, timestamp: new Date().toISOString() }]);
             }
         });
-
         return () => {
             socket.off("chat message");
         };
     }, [currentUserId, selectedUser.id]);
 
+    // Sending a message
     const sendMessage = (): void => {
         if (!currentMessage.trim()) return; // Preventing sending empty messages
         const messageData: ChatHistory = {

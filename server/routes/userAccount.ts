@@ -1,6 +1,7 @@
+// Referencing: all the source codes, lecture slides and videos from the Advanced Web Applications course implemented by Erno Vanhala at LUT University in 2023-2024
 // Referencing https://express-validator.github.io/docs/6.6.0/
 
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcrypt';
 import { body, validationResult } from 'express-validator';
 import { userAccount } from '../mongodb/models/User';
@@ -29,8 +30,8 @@ const registrationValidation = [
 ];
 
 /* POST register user. */
-router.post('/register', registrationValidation, function (req: any, res: any, next: any) {
-    const errors = validationResult(req);
+router.post('/register', registrationValidation, function (req: Request, res: Response, next: NextFunction) {
+    const errors = validationResult(req); // Validating for registration so the email and password are in the correct format
     if (!errors.isEmpty()) {
         const customErrors = errors.array() as validationError[];
         const hasPasswordError = customErrors.some(error => error.path === 'password');
@@ -51,12 +52,11 @@ router.post('/register', registrationValidation, function (req: any, res: any, n
                     email: req.body.email,
                     password: hashedPassword
                 });
-                return newUser.save();
-            }
-        })
-        .then(savedUser => {
-            if (savedUser) {
-                res.status(200).send("User successfully registered");
+                const savedUser = await newUser.save();
+                if (savedUser) {
+                    res.status(200).send("User successfully registered");
+                    return;
+                }
             }
         })
         .catch(err => {
@@ -65,7 +65,7 @@ router.post('/register', registrationValidation, function (req: any, res: any, n
 });
 
 /* POST login user. */
-router.post('/login', function (req, res, next) {
+router.post('/login', function (req: Request, res: Response, next: NextFunction) {
     userAccount.findOne({ email: req.body.email })
         .then(user => {
             if (!user) {
@@ -94,10 +94,12 @@ router.post('/login', function (req, res, next) {
                                     return next(err);
                                 }
                                 res.json({ success: true, token: token });
+                                return;
                             }
                         );
                     } else {
                         res.status(403).send("Invalid credentials");
+                        return;
                     }
                 });
             }
@@ -108,7 +110,7 @@ router.post('/login', function (req, res, next) {
 });
 
 /* GET user id */
-router.get('/:email', function (req, res, next) {
+router.get('/:email', function (req: Request, res: Response, next: NextFunction) {
     userAccount.findOne({ email: req.params.email })
         .then(user => {
             if (user) {

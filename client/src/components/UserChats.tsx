@@ -1,4 +1,7 @@
-import { useEffect, useState } from 'react';
+// Referencing: all the source codes, lecture slides and videos from the Advanced Web Applications course implemented by Erno Vanhala at LUT University in 2023-2024
+// Referencing: https://www.framer.com/motion/
+
+import React, { useEffect, useState } from 'react';
 import ChatBox from './ChatBox';
 import { motion } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -7,12 +10,21 @@ import { Spinner } from 'react-bootstrap';
 
 const authToken = localStorage.getItem('auth_token');
 
-function UserChats({ userEmail }: { userEmail: string | undefined }) {
+interface UserChatsProps {
+    userEmail?: string;
+}
+
+interface UserNameMap {
+    [userId: string]: string;
+}
+
+const UserChats: React.FC<UserChatsProps> = ({ userEmail }) => {
     const [matches, setMatches] = useState<string[]>([]);
     const [selectedChat, setSelectedChat] = useState<string>("");
-    const [userNames, setUserNames] = useState<{ [userId: string]: string }>({});
-    const [isLoading, setIsLoading] = useState(true);
+    const [userNames, setUserNames] = useState<UserNameMap>({});
+    const [isLoading, setIsLoading] = useState<boolean>(true);
 
+    // Fetching the user's interactions
     useEffect(() => {
         if (userEmail) {
             setIsLoading(true);
@@ -23,7 +35,6 @@ function UserChats({ userEmail }: { userEmail: string | undefined }) {
             })
                 .then(response => response.ok ? response.json() : Promise.reject(response.text()))
                 .then(data => {
-                    console.log('Interactions from UserChat:', data);
                     setMatches(data.matched);
                     setIsLoading(false);
                     data.matched.forEach((userId: string) => getName(userId));
@@ -35,6 +46,7 @@ function UserChats({ userEmail }: { userEmail: string | undefined }) {
         }
     }, [userEmail]);
 
+    // Fetching the user's name
     const getName = (userId: string) => {
         if (!userNames[userId]) {
             fetch(`/api/user/info/id/${userId}`, {
@@ -50,6 +62,7 @@ function UserChats({ userEmail }: { userEmail: string | undefined }) {
         }
     };
 
+    // Variants for the list and list items to amek them cooler
     const listVariants = {
         hidden: { opacity: 0 },
         visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
@@ -66,16 +79,16 @@ function UserChats({ userEmail }: { userEmail: string | undefined }) {
     };
 
     return (
-        <div className="d-flex" style={{marginTop: '20px'}}>
+        <div className="d-flex" style={{ marginTop: '20px' }}>
             <div className="flex-grow-1">
                 {isLoading ? (
                     <div className="d-flex justify-content-center align-items-center" style={{ height: '100%' }}>
-                        <Spinner animation="border" role="status" style= {{marginTop: '10%'}}>
+                        <Spinner animation="border" role="status" style={{ marginTop: '10%' }}>
                             <span className="visually-hidden">Loading...</span>
                         </Spinner>
                     </div>
                 ) : matches.length > 0 ? (
-                    <motion.ul className="list-group" variants={listVariants} initial="hidden" animate="visible"  style={{marginRight: '30px'}}>
+                    <motion.ul className="list-group" variants={listVariants} initial="hidden" animate="visible" style={{ marginRight: '30px' }}>
                         {matches.map(matchedUser => (
                             <motion.li
                                 key={matchedUser}
@@ -102,7 +115,7 @@ function UserChats({ userEmail }: { userEmail: string | undefined }) {
                     <ChatBox currentUserEmail={userEmail} selectedUser={{ id: selectedChat, name: userNames[selectedChat] }} />
                 ) : matches.length > 0 && !isLoading ? (
                     <motion.div className="d-flex align-items-center justify-content-center" style={{ height: '100%' }} variants={emptyStateVariants} initial="hidden" animate="visible">
-                        <div className="text-center" style={{marginLeft: '30px'}}>
+                        <div className="text-center" style={{ marginLeft: '30px' }}>
                             <FontAwesomeIcon icon={faComments} size="4x" className="text-muted mb-3" />
                             <p><strong>Select a chat to start messaging</strong></p>
                         </div>

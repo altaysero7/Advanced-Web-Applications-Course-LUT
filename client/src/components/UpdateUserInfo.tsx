@@ -1,14 +1,30 @@
+// Referencing: all the source codes, lecture slides and videos from the Advanced Web Applications course implemented by Erno Vanhala at LUT University in 2023-2024
 // Referencing: https://getbootstrap.com/docs/4.0/components/alerts/
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Form, Button, Container, Card, Row, Col, Toast } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUser, faEnvelope, faBirthdayCake, faPizzaSlice, faPalette, faFilm } from '@fortawesome/free-solid-svg-icons';
+import { faUser, faEnvelope, faBirthdayCake, faPizzaSlice, faPalette, faFilm, IconDefinition } from '@fortawesome/free-solid-svg-icons';
 
 const authToken = localStorage.getItem('auth_token');
 
-function UpdateUserInfo({ userEmail }: { userEmail: string | undefined }) {
-    const [formData, setFormData] = useState({
+interface FormData {
+    name: string;
+    surname: string;
+    age: string;
+    favoriteFood: string;
+    favoriteColor: string;
+    favoriteMovieGenre: string;
+    email: string | undefined;
+}
+
+interface UpdateUserInfoProps {
+    userEmail?: string;
+    onUserInfoUpdated: (updatedName: string) => void;
+}
+
+const UpdateUserInfo: React.FC<UpdateUserInfoProps> = ({ userEmail, onUserInfoUpdated }) => {
+    const [formData, setFormData] = useState<FormData>({
         name: '',
         surname: '',
         age: '',
@@ -21,7 +37,7 @@ function UpdateUserInfo({ userEmail }: { userEmail: string | undefined }) {
     const [toastMessage, setToastMessage] = useState<string>('');
     const [isSuccess, setIsSuccess] = useState(true);
 
-
+    // Fetching user information
     useEffect(() => {
         fetchUserInfo(userEmail);
     }, [userEmail]);
@@ -57,7 +73,8 @@ function UpdateUserInfo({ userEmail }: { userEmail: string | undefined }) {
             });
     };
 
-    const handleChange = (event: any) => {
+    // Handling form input changes
+    const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = event.target;
         setFormData(prevState => ({
             ...prevState,
@@ -65,7 +82,8 @@ function UpdateUserInfo({ userEmail }: { userEmail: string | undefined }) {
         }));
     };
 
-    const handleSubmit = (event: any) => {
+    // Handling form submission
+    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
 
         const data = {
@@ -78,6 +96,7 @@ function UpdateUserInfo({ userEmail }: { userEmail: string | undefined }) {
             email: formData.email
         };
 
+        // Sending the updated user information to the server
         fetch(`/api/user/info`, {
             method: 'POST',
             headers: {
@@ -91,6 +110,7 @@ function UpdateUserInfo({ userEmail }: { userEmail: string | undefined }) {
                     setToastMessage('Your information has been updated successfully.');
                     setIsSuccess(true);
                     setShowToast(true);
+                    onUserInfoUpdated(data.name);
                 } else {
                     throw new Error('Failed to update information');
                 }
@@ -102,7 +122,8 @@ function UpdateUserInfo({ userEmail }: { userEmail: string | undefined }) {
             });
     };
 
-    const createInputField = (name: string, label: string, type = 'text', icon: any) => (
+    // Creating input fields for the form using the given parameters
+    const createInputField = (name: keyof FormData, label: string, type: 'text' | 'number' | 'email', icon: IconDefinition) => (
         <Form.Group as={Col} md="6" className="mb-3" controlId={`form${name}`}>
             <Form.Label><FontAwesomeIcon icon={icon} /> {label}</Form.Label>
             <Form.Control

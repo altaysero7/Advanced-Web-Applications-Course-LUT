@@ -1,3 +1,6 @@
+// Referencing: all the source codes, lecture slides and videos from the Advanced Web Applications course implemented by Erno Vanhala at LUT University in 2023-2024
+// Referencing: https://getbootstrap.com/docs/4.0/components
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Alert, Button, Card, Container, Form } from 'react-bootstrap';
@@ -12,11 +15,13 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
     const [error, setError] = useState<string>('');
     const navigate = useNavigate();
 
-    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    // Logging the user and storing the token in local storage
+    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
         event.preventDefault();
 
         const loginData = { email, password };
 
+        // Sending the login request
         fetch("/api/user/account/login", {
             method: "POST",
             headers: {
@@ -37,7 +42,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                     navigate(`/user/${email}`);
                 }
             })
-            .catch(error => {
+            .catch((error) => {
                 setError(error.message || "An error occurred while logging in. Please try again.");
             });
     };
