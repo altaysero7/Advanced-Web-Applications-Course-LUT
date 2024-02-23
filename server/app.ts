@@ -75,16 +75,17 @@ io.on("connection", (socket) => {
 });
 
 server.listen(4000, () => {
-    console.log("chat server listening on port 4000");
+    console.log("chat server is created");
 });
 
 // Serving static assets if in production and else enable CORS
-if (process.env.NODE_ENV === 'production') { //NODE_ENV=production npm start
+if (process.env.NODE_ENV === 'production') { //NODE_ENV=production npm start (first "npm run build" to create the build folder in the client folder if any changes have been made to the client side code)
     app.use(express.static(path.resolve('..', 'client', 'build')));
     app.get('*', (req: Request, res: Response) =>
         res.sendFile(path.resolve('..', 'client', 'build', 'index.html'))
     );
-} else if (process.env.NODE_ENV === 'development') { //NODE_ENV=development npm start
+    console.log("Server is running in production mode at http://localhost:3131");
+} else if (process.env.NODE_ENV === 'development') { //NODE_ENV=development npm start (or npm start)
     const corsOptions = {
         origin: 'http://localhost:3000',
         optionsSuccessStatus: 200
