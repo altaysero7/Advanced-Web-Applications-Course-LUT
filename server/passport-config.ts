@@ -6,13 +6,13 @@ import { userAccount } from './mongodb/models/User';
 
 const opts = {
     jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-    secretOrKey: process.env.JWT_SECRET || "veryVeryVerySecretKey"
+    secretOrKey: "veryVeryVerySecretKey", // process.env.JWT_SECRET || "veryVeryVerySecretKey"
 };
 
 // Setting up authentication strategy
 function setupAuthentication(passport: PassportStatic): void {
     passport.use(new JwtStrategy(opts, (jwtPayload, done) => {
-        userAccount.findOne({ _id: jwtPayload.id })
+        userAccount.findById(jwtPayload.id)
             .then((user) => {
                 if (user) {
                     return done(null, user);

@@ -1,14 +1,15 @@
 // Referencing: all the source codes, lecture slides and videos from the Advanced Web Applications course implemented by Erno Vanhala at LUT University in 2023-2024
 
 import express, { Request, Response } from 'express';
-// import passport from 'passport';
+import passport from 'passport';
+import { ChatMessage } from '../mongodb/models/Chat';
+
 const router = express.Router();
 router.use(express.urlencoded({ extended: true }));
-import { ChatMessage } from '../mongodb/models/Chat';
 
 
 /* GET user chat history. */
-router.get('/history/:user1/:user2', async (req: Request, res: Response) => {
+router.get('/history/:user1/:user2', passport.authenticate('jwt', { session: false }), async (req: Request, res: Response) => {
     try {
         const { user1, user2 } = req.params;
 
@@ -26,5 +27,3 @@ router.get('/history/:user1/:user2', async (req: Request, res: Response) => {
 });
 
 export default router;
-
-//TODO: , passport.authenticate('jwt', { session: false }),

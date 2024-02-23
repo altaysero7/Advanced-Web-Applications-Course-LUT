@@ -2,12 +2,14 @@
 
 import express, { Request, Response, NextFunction } from 'express';
 import { userAccount, UserInteractions } from '../mongodb/models/User';
-// import passport from 'passport';
+import passport from 'passport';
+import { checkUserEmail } from '../middlewares/checkUserEmail';
+
 const router = express.Router();
 router.use(express.urlencoded({ extended: true }));
 
 /* POST user interaction. */
-router.post('/', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/', passport.authenticate('jwt', { session: false }), checkUserEmail('body'), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { email, liked, disliked } = req.body;
 
@@ -68,7 +70,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
 });
 
 /* GET user interactions. */
-router.get('/:email', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/:email', passport.authenticate('jwt', { session: false }), checkUserEmail(), async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { email } = req.params;
 
@@ -95,5 +97,3 @@ router.get('/:email', async (req: Request, res: Response, next: NextFunction) =>
 });
 
 export default router;
-
-//TODO: , passport.authenticate('jwt', { session: false }),

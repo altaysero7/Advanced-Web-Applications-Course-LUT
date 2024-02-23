@@ -5,8 +5,8 @@ import React, { useEffect, useState } from 'react';
 import { Form, Button, Container, Card, Row, Col, Toast } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser, faEnvelope, faBirthdayCake, faPizzaSlice, faPalette, faFilm, IconDefinition } from '@fortawesome/free-solid-svg-icons';
-
-const authToken = localStorage.getItem('auth_token');
+import { fetchWithAuth } from '../utils/fetchWithAuth';
+import UnauthorizedErrorPage from './UnAuthorizedErrorPage';
 
 interface FormData {
     name: string;
@@ -36,6 +36,7 @@ const UpdateUserInfo: React.FC<UpdateUserInfoProps> = ({ userEmail, onUserInfoUp
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState<string>('');
     const [isSuccess, setIsSuccess] = useState(true);
+    const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
 
     // Fetching user information
     useEffect(() => {
@@ -43,12 +44,9 @@ const UpdateUserInfo: React.FC<UpdateUserInfoProps> = ({ userEmail, onUserInfoUp
     }, [userEmail]);
 
     const fetchUserInfo = async (email: string | undefined) => {
-        fetch(`/api/user/info/${email}`, {
-            headers: {
-                'Authorization': `Bearer ${authToken}`
-            }
-        })
+        fetchWithAuth(`/api/user/info/${email}`)
             .then(response => {
+                if (!response) throw new Error('FETCH_ERROR');
                 if (response.ok) {
                     return response.json();
                 }
@@ -67,9 +65,13 @@ const UpdateUserInfo: React.FC<UpdateUserInfoProps> = ({ userEmail, onUserInfoUp
                 }
             })
             .catch(error => {
-                setToastMessage(`Error fetching user info:  ${error}`);
                 setIsSuccess(false);
                 setShowToast(true);
+                if (['UNAUTHORIZED', 'AUTH_EXPIRED'].some(e => error.message.includes(e))) {
+                    setIsAuthenticated(false);
+                } else {
+                    setToastMessage(`Error fetching user info:  ${error}`);
+                }
             });
     };
 
@@ -97,15 +99,15 @@ const UpdateUserInfo: React.FC<UpdateUserInfoProps> = ({ userEmail, onUserInfoUp
         };
 
         // Sending the updated user information to the server
-        fetch(`/api/user/info`, {
+        fetchWithAuth(`/api/user/info`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${authToken}`,
             },
             body: JSON.stringify(data),
         })
             .then(response => {
+                if (!response) throw new Error('FETCH_ERROR');
                 if (response.ok) {
                     setToastMessage('Your information has been updated successfully.');
                     setIsSuccess(true);
@@ -116,9 +118,13 @@ const UpdateUserInfo: React.FC<UpdateUserInfoProps> = ({ userEmail, onUserInfoUp
                 }
             })
             .catch(error => {
-                setToastMessage(`Error updating user info: ${error}`);
                 setIsSuccess(false);
                 setShowToast(true);
+                if (['UNAUTHORIZED', 'AUTH_EXPIRED'].some(e => error.message.includes(e))) {
+                    setIsAuthenticated(false);
+                } else {
+                    setToastMessage(`Error updating user info: ${error}`);
+                }
             });
     };
 
@@ -138,6 +144,10 @@ const UpdateUserInfo: React.FC<UpdateUserInfoProps> = ({ userEmail, onUserInfoUp
             />
         </Form.Group>
     );
+
+    if (!isAuthenticated) {
+        return <UnauthorizedErrorPage />;
+    }
 
     return (
         <Container className="mt-5">

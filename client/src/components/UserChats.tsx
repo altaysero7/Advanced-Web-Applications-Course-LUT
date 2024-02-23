@@ -7,8 +7,8 @@ import { motion } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHeartBroken, faComments, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { Spinner } from 'react-bootstrap';
-
-const authToken = localStorage.getItem('auth_token');
+import { fetchWithAuth } from '../utils/fetchWithAuth';
+import UnauthorizedErrorPage from './UnAuthorizedErrorPage';
 
 interface UserChatsProps {
     userEmail?: string;
@@ -23,25 +23,33 @@ const UserChats: React.FC<UserChatsProps> = ({ userEmail }) => {
     const [selectedChat, setSelectedChat] = useState<string>("");
     const [userNames, setUserNames] = useState<UserNameMap>({});
     const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
 
     // Fetching the user's interactions
     useEffect(() => {
         if (userEmail) {
             setIsLoading(true);
-            fetch(`/api/user/interactions/${userEmail}`, {
-                headers: {
-                    'Authorization': `Bearer ${authToken}`,
-                },
-            })
-                .then(response => response.ok ? response.json() : Promise.reject(response.text()))
+            fetchWithAuth(`/api/user/interactions/${userEmail}`)
+                .then(response => {
+                    if (!response) throw new Error('FETCH_ERROR');
+                    if (response.ok) {
+                        return response.json();
+                    } else {
+                        return Promise.reject(response.text());
+                    }
+                })
                 .then(data => {
                     setMatches(data.matched);
                     setIsLoading(false);
                     data.matched.forEach((userId: string) => getName(userId));
                 })
                 .catch(error => {
-                    console.error('Error fetching interactions:', error);
                     setIsLoading(false);
+                    if (['UNAUTHORIZED', 'AUTH_EXPIRED'].some(e => error.message.includes(e))) {
+                        setIsAuthenticated(false);
+                    } else {
+                        console.error('Error fetching interactions:', error);
+                    }
                 });
         }
     }, [userEmail]);
@@ -49,16 +57,21 @@ const UserChats: React.FC<UserChatsProps> = ({ userEmail }) => {
     // Fetching the user's name
     const getName = (userId: string) => {
         if (!userNames[userId]) {
-            fetch(`/api/user/info/id/${userId}`, {
-                headers: {
-                    'Authorization': `Bearer ${authToken}`,
-                },
-            })
-                .then(response => response.json())
+            fetchWithAuth(`/api/user/info/id/${userId}`)
+                .then(response => {
+                    if (!response) throw new Error('FETCH_ERROR');
+                    return response.json();
+                })
                 .then(userInfo => {
                     setUserNames(prev => ({ ...prev, [userId]: userInfo.name }));
                 })
-                .catch(error => console.error('Error fetching matched user info:', error));
+                .catch(error => {
+                    if (['UNAUTHORIZED', 'AUTH_EXPIRED'].some(e => error.message.includes(e))) {
+                        setIsAuthenticated(false);
+                    } else {
+                        console.error('Error fetching matched user info:', error);
+                    }
+                });
         }
     };
 
@@ -77,6 +90,10 @@ const UserChats: React.FC<UserChatsProps> = ({ userEmail }) => {
         hidden: { scale: 0.5, opacity: 0 },
         visible: { scale: 1, opacity: 1, transition: { type: "spring", stiffness: 100 } }
     };
+
+    if (!isAuthenticated) {
+        return <UnauthorizedErrorPage />;
+    }
 
     return (
         <div className="d-flex" style={{ marginTop: '20px' }}>

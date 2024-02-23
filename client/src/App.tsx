@@ -18,7 +18,7 @@ import { faSignOut, faHeartbeat } from '@fortawesome/free-solid-svg-icons';
 const authToken = localStorage.getItem('auth_token');
 
 const App: React.FC = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(authToken ? true : false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
   // Logging out the user and removing the token from local storage
   const handleLogout = (): void => {
@@ -31,7 +31,7 @@ const App: React.FC = () => {
     <Router>
       <Navbar bg="dark" variant="dark" expand="lg" fixed="top">
         <Container>
-          <Navbar.Brand style={{cursor: 'default'}}>FakeTinder <FontAwesomeIcon icon={faHeartbeat} /></Navbar.Brand>
+          <Navbar.Brand style={{ cursor: 'default' }}>FakeTinder <FontAwesomeIcon icon={faHeartbeat} /></Navbar.Brand>
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="ms-auto">

@@ -5,8 +5,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPaperPlane } from '@fortawesome/free-solid-svg-icons';
+import { fetchWithAuth } from '../utils/fetchWithAuth';
+import UnauthorizedErrorPage from './UnAuthorizedErrorPage';
 
-const authToken = localStorage.getItem('auth_token');
 const socket: Socket = io("http://localhost:4000"); // Connecting to the chat server
 
 interface ChatHistory {
@@ -29,6 +30,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ currentUserEmail, selectedUser }) => 
     const [messages, setMessages] = useState<ChatHistory[]>([]);
     const [currentUserId, setCurrentUserId] = useState<string>("")
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
 
     // Chat is scrolling to the latest message
     const scrollToBottom = () => {
@@ -38,12 +40,9 @@ const ChatBox: React.FC<ChatBoxProps> = ({ currentUserEmail, selectedUser }) => 
 
     // Fetching current user's ID
     useEffect(() => {
-        fetch(`/api/user/account/${currentUserEmail}`, {
-            headers: {
-                'Authorization': `Bearer ${authToken}`,
-            },
-        })
+        fetchWithAuth(`/api/user/account/${currentUserEmail}`)
             .then(response => {
+                if (!response) throw new Error('FETCH_ERROR');
                 if (response.ok) {
                     return response.json();
                 } else {
@@ -57,16 +56,20 @@ const ChatBox: React.FC<ChatBoxProps> = ({ currentUserEmail, selectedUser }) => 
                 }
                 setCurrentUserId(user.id);
             })
+            .catch(error => {
+                if (['UNAUTHORIZED', 'AUTH_EXPIRED'].some(e => error.message.includes(e))) {
+                    setIsAuthenticated(false);
+                } else {
+                    console.error('Error fetching user ID:', error);
+                }
+            });
     }, [currentUserEmail]);
 
     // Fetching chat history
     useEffect(() => {
-        fetch(`/api/chat/history/${currentUserId}/${selectedUser.id}`, {
-            headers: {
-                'Authorization': `Bearer ${authToken}`,
-            },
-        })
+        fetchWithAuth(`/api/chat/history/${currentUserId}/${selectedUser.id}`)
             .then(response => {
+                if (!response) throw new Error('FETCH_ERROR');
                 if (response.ok) {
                     return response.json();
                 } else {
@@ -85,7 +88,13 @@ const ChatBox: React.FC<ChatBoxProps> = ({ currentUserEmail, selectedUser }) => 
                     timestamp: chat.timestamp,
                 })));
             })
-            .catch(error => console.error('Error fetching chat history:', error));
+            .catch(error => {
+                if (['UNAUTHORIZED', 'AUTH_EXPIRED'].some(e => error.message.includes(e))) {
+                    setIsAuthenticated(false);
+                } else {
+                    console.error('Error fetching chat history:', error);
+                }
+            });
     }, [currentUserId, selectedUser.id]);
 
     // Listening for new messages
@@ -113,6 +122,10 @@ const ChatBox: React.FC<ChatBoxProps> = ({ currentUserEmail, selectedUser }) => 
         socket.emit("chat message", messageData);
         setCurrentMessage("");
     };
+
+    if (!isAuthenticated) {
+        return <UnauthorizedErrorPage />;
+    }
 
     return (
         <div className="card" style={{ maxWidth: '400px', overflow: 'hidden' }}>

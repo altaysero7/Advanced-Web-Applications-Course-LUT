@@ -7,8 +7,8 @@ import { motion } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faAppleAlt, faArrowLeft, faArrowRight, faBirthdayCake, faFilm, faHeart, faHeartBroken, faPalette } from '@fortawesome/free-solid-svg-icons';
 import { Spinner } from 'react-bootstrap';
-
-const authToken = localStorage.getItem('auth_token');
+import { fetchWithAuth } from '../utils/fetchWithAuth';
+import UnauthorizedErrorPage from './UnAuthorizedErrorPage';
 
 interface Profile {
     userId: string;
@@ -33,16 +33,16 @@ const AllProfiles: React.FC<AllProfilesProps> = ({ currentUserEmail }) => {
     const [profiles, setProfiles] = useState<Profile[]>([]);
     const [status, setStatus] = useState<ProfileStatus>({});
     const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
 
     // Fetching all profiles except the current user's
     useEffect(() => {
         setIsLoading(true);
-        fetch('/api/allProfiles', {
-            headers: {
-                'Authorization': `Bearer ${authToken}`,
-            },
-        })
-            .then(response => response.json())
+        fetchWithAuth('/api/allProfiles')
+            .then(response => {
+                if (!response) throw new Error('FETCH_ERROR');
+                return response.json()
+            })
             .then(data => {
                 if (data) {
                     setProfiles(data.filter((profile: Profile) => profile.email !== currentUserEmail)); // Filter out the current user's profile
@@ -50,20 +50,21 @@ const AllProfiles: React.FC<AllProfilesProps> = ({ currentUserEmail }) => {
                 setIsLoading(false);
             })
             .catch(error => {
-                console.error('Error fetching profiles: ' + error.message)
                 setIsLoading(false);
+                if (['UNAUTHORIZED', 'AUTH_EXPIRED'].some(e => error.message.includes(e))) {
+                    setIsAuthenticated(false);
+                } else {
+                    console.error('Error fetching profiles: ' + error.message)
+                }
             });
     }, [currentUserEmail]);
 
     // Fetching the user's interactions
     useEffect(() => {
         if (currentUserEmail) {
-            fetch(`/api/user/interactions/${currentUserEmail}`, {
-                headers: {
-                    'Authorization': `Bearer ${authToken}`,
-                },
-            })
+            fetchWithAuth(`/api/user/interactions/${currentUserEmail}`)
                 .then(response => {
+                    if (!response) throw new Error('FETCH_ERROR');
                     if (response.ok) {
                         return response.json();
                     } else {
@@ -80,7 +81,13 @@ const AllProfiles: React.FC<AllProfilesProps> = ({ currentUserEmail }) => {
                     (data.disliked as string[]).forEach((userId: string) => { updatedStatus[userId] = 'disliked'; });
                     setStatus(updatedStatus);
                 })
-                .catch(error => console.error('Error fetching interactions: ' + error));
+                .catch(error => {
+                    if (['UNAUTHORIZED', 'AUTH_EXPIRED'].some(e => error.message.includes(e))) {
+                        setIsAuthenticated(false);
+                    } else {
+                        console.error('Error fetching interactions: ' + error);
+                    }
+                });
         }
     }, [currentUserEmail]);
 
@@ -91,20 +98,26 @@ const AllProfiles: React.FC<AllProfilesProps> = ({ currentUserEmail }) => {
         const data = direction === 'like' ? { liked: [interactedUserId] } : { disliked: [interactedUserId] };
 
         // Sending the interaction data to the server
-        fetch('/api/user/interactions', {
+        fetchWithAuth('/api/user/interactions', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${authToken}`,
             },
             body: JSON.stringify({
                 email: currentUserEmail,
                 ...data
             }),
         })
-            .then(response => response.text())
+            .then(response => {
+                if (!response) throw new Error('FETCH_ERROR');
+                response.text()
+            })
             .catch((error) => {
-                console.error('Error:', error);
+                if (['UNAUTHORIZED', 'AUTH_EXPIRED'].some(e => error.message.includes(e))) {
+                    setIsAuthenticated(false);
+                } else {
+                    console.error('Error updating interactions: ' + error);
+                }
             });
     };
 
@@ -114,6 +127,10 @@ const AllProfiles: React.FC<AllProfilesProps> = ({ currentUserEmail }) => {
         animate: { scale: 1, opacity: 1, transition: { duration: 0.5 } },
         whileHover: { scale: 1.05 },
     };
+
+    if (!isAuthenticated) {
+        return <UnauthorizedErrorPage />;
+    }
 
     return (
         <div>

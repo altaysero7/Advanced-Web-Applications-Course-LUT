@@ -2,7 +2,9 @@
 
 import express, { Request, Response, NextFunction } from 'express';
 import { userAccount, UserInfo } from '../mongodb/models/User';
-// import passport from 'passport';
+import passport from 'passport';
+import { checkUserEmail } from '../middlewares/checkUserEmail';
+
 const router = express.Router();
 router.use(express.urlencoded({ extended: true }));
 
@@ -17,7 +19,7 @@ interface UserRequestBody {
 }
 
 /* POST user information. */
-router.post('/', function (req: Request, res: Response, next: NextFunction) {
+router.post('/', passport.authenticate('jwt', { session: false }), checkUserEmail('body'), function (req: Request, res: Response, next: NextFunction) {
     const body: UserRequestBody = req.body;
 
     userAccount.findOne({ email: body.email })
@@ -44,7 +46,7 @@ router.post('/', function (req: Request, res: Response, next: NextFunction) {
 });
 
 /* GET user information. */
-router.get('/:email', function (req: Request, res: Response, next: NextFunction) {
+router.get('/:email', passport.authenticate('jwt', { session: false }), checkUserEmail(), function (req: Request, res: Response, next: NextFunction) {
     UserInfo.findOne({ email: req.params.email })
         .then((userInfo) => {
             if (userInfo) {
@@ -60,7 +62,7 @@ router.get('/:email', function (req: Request, res: Response, next: NextFunction)
 });
 
 /* GET user information by id. */
-router.get('/id/:id', function (req: Request, res: Response, next: NextFunction) {
+router.get('/id/:id', passport.authenticate('jwt', { session: false }), function (req: Request, res: Response, next: NextFunction) {
     UserInfo.findOne({ userId: req.params.id })
         .then((userInfo) => {
             if (userInfo) {
@@ -76,5 +78,3 @@ router.get('/id/:id', function (req: Request, res: Response, next: NextFunction)
 });
 
 export default router;
-
-//TODO: , passport.authenticate('jwt', { session: false }),

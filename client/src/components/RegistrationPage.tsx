@@ -5,7 +5,6 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Form, Button, Container, Alert, Card } from 'react-bootstrap';
 
-
 const RegistrationPage: React.FC = () => {
     const [email, setEmail] = useState<string>('');
     const [password, setPassword] = useState<string>('');

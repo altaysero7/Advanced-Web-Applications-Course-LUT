@@ -2,12 +2,13 @@
 
 import express, { Request, Response, NextFunction } from 'express';
 import { UserInfo } from '../mongodb/models/User';
-// import passport from 'passport';
+import passport from 'passport';
+
 const router = express.Router();
 router.use(express.urlencoded({ extended: true }));
 
 /* GET all profiles. */
-router.get('/', async (req: Request, res: Response, next: NextFunction) => {
+router.get('/', passport.authenticate('jwt', { session: false }), async (req: Request, res: Response, next: NextFunction) => {
     UserInfo.find({})
         .then((profiles) => {
             if (profiles) {
@@ -23,5 +24,3 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 });
 
 export default router;
-
-//TODO: , passport.authenticate('jwt', { session: false }),

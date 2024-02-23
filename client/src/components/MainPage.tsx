@@ -10,13 +10,14 @@ import UserChats from './UserChats';
 import { motion } from 'framer-motion';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSmileBeam } from '@fortawesome/free-solid-svg-icons';
-
-const authToken = localStorage.getItem('auth_token');
+import { fetchWithAuth } from '../utils/fetchWithAuth';
+import UnauthorizedErrorPage from './UnAuthorizedErrorPage';
 
 const MainPage: React.FC = () => {
     const { userEmail } = useParams();
     const [activeKey, setActiveKey] = useState<string>('profiles');
     const [userName, setuserName] = useState<string>('');
+    const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
 
     // Rendering the active tab content
     const renderActiveTabContent = () => {
@@ -32,12 +33,9 @@ const MainPage: React.FC = () => {
 
     // Fetching the user's name
     useEffect(() => {
-        fetch(`/api/user/info/${userEmail}`, {
-            headers: {
-                'Authorization': `Bearer ${authToken}`,
-            },
-        })
+        fetchWithAuth(`/api/user/info/${userEmail}`)
             .then(response => {
+                if (!response) throw new Error('FETCH_ERROR');
                 if (response.ok) {
                     return response.json();
                 } else {
@@ -51,13 +49,23 @@ const MainPage: React.FC = () => {
                 }
                 setuserName(userInfo.name);
             })
-            .catch(error => console.error('Error fetching user name:', error));
+            .catch(error => {
+                if (['UNAUTHORIZED', 'AUTH_EXPIRED'].some(e => error.message.includes(e))) {
+                    setIsAuthenticated(false);
+                } else {
+                    console.error('Error fetching user name:', error);
+                }
+            });
     }, [userEmail]);
 
     // Handling the updated user information from the UpdateUserInfo component
     const handleUserInfoUpdated = (updatedName: string) => {
         setuserName(updatedName);
     };
+
+    if (!isAuthenticated) {
+        return <UnauthorizedErrorPage />;
+    }
 
     return (
         <Container className="mt-5">

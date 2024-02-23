@@ -6,6 +6,9 @@ import bcrypt from 'bcrypt';
 import { body, validationResult } from 'express-validator';
 import { userAccount } from '../mongodb/models/User';
 import jwt from 'jsonwebtoken';
+import passport from 'passport';
+import { checkUserEmail } from '../middlewares/checkUserEmail';
+
 const router = express.Router();
 router.use(express.urlencoded({ extended: true }));
 
@@ -87,7 +90,7 @@ router.post('/login', function (req: Request, res: Response, next: NextFunction)
                         };
                         jwt.sign(
                             jwtPayload,
-                            process.env.JWT_SECRET || "veryVeryVerySecretKey",
+                            "veryVeryVerySecretKey", // process.env.JWT_SECRET || "veryVeryVerySecretKey"
                             { expiresIn: 1200 },
                             (err, token) => {
                                 if (err) {
@@ -110,7 +113,7 @@ router.post('/login', function (req: Request, res: Response, next: NextFunction)
 });
 
 /* GET user id */
-router.get('/:email', function (req: Request, res: Response, next: NextFunction) {
+router.get('/:email', passport.authenticate('jwt', { session: false }), checkUserEmail(), function (req: Request, res: Response, next: NextFunction) {
     userAccount.findOne({ email: req.params.email })
         .then(user => {
             if (user) {
