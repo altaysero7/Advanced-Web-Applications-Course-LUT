@@ -4,6 +4,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Form, Button, Container, Alert, Card } from 'react-bootstrap';
+import { useTranslation } from 'react-i18next';
 
 const RegistrationPage: React.FC = () => {
     const [email, setEmail] = useState<string>('');
@@ -11,6 +12,7 @@ const RegistrationPage: React.FC = () => {
     const [error, setError] = useState<string>('');
     const [registrationSuccess, setRegistrationSuccess] = useState<boolean>(false);
     const navigate = useNavigate();
+    const { t } = useTranslation();
 
     // Redirecting to the login page after successful registration
     useEffect(() => {
@@ -43,11 +45,11 @@ const RegistrationPage: React.FC = () => {
                 if (responseText === 'User successfully registered') {
                     setRegistrationSuccess(true);
                 } else {
-                    setError(responseText);
+                    setError(t(responseText));
                 }
             })
             .catch(error => {
-                setError(error.message || "An error occurred while registering. Please try again.");
+                setError(t(error.message, { defaultValue: "An error occurred while registering. Please try again." }));
             });
     };
 
@@ -57,26 +59,26 @@ const RegistrationPage: React.FC = () => {
                 <Card.Body>
                     {registrationSuccess ? (
                         <Alert variant="success">
-                            Registration successful! Redirecting to login page...
+                            {t('Registration successful! Redirecting to login page...')}
                         </Alert>
                     ) : (
                         <>
-                            <h2 className="text-center mb-4">Registration Page</h2>
+                            <h2 className="text-center mb-4">{t('Registration Page')}</h2>
                             {error && <Alert variant="danger">{error}</Alert>}
                             <Form onSubmit={handleSubmit}>
                                 <Form.Group className="mb-3" controlId="formBasicEmail">
-                                    <Form.Label>Email address</Form.Label>
-                                    <Form.Control type="email" placeholder="Enter email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+                                    <Form.Label>{t('Email address')}</Form.Label>
+                                    <Form.Control type="email" placeholder={t('Enter email')} required value={email} onChange={(e) => setEmail(e.target.value)} />
                                 </Form.Group>
 
                                 <Form.Group className="mb-3" controlId="formBasicPassword">
-                                    <Form.Label>Password</Form.Label>
-                                    <Form.Control type="password" placeholder="Password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+                                    <Form.Label>{t('Password')}</Form.Label>
+                                    <Form.Control type="password" placeholder={t('Enter password')} required value={password} onChange={(e) => setPassword(e.target.value)} />
                                 </Form.Group>
 
                                 <div className="d-grid gap-2">
                                     <Button variant="primary" type="submit">
-                                        Register
+                                    {t('Register')}
                                     </Button>
                                 </div>
                             </Form>
@@ -84,7 +86,7 @@ const RegistrationPage: React.FC = () => {
                     )}
                 </Card.Body>
                 <div className="text-center mt-2">
-                    <Button variant="link" onClick={() => navigate('/')}>Go back Home</Button>
+                    <Button variant="link" onClick={() => navigate('/')}>{t('Go back Home')}</Button>
                 </div>
             </Card>
         </Container>

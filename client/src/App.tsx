@@ -11,14 +11,25 @@ import Nav from 'react-bootstrap/Nav';
 import Container from 'react-bootstrap/Container';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import HomePage from './components/HomePage';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSignOut, faHeartbeat } from '@fortawesome/free-solid-svg-icons';
-
-const authToken = localStorage.getItem('auth_token');
+import { useTranslation } from 'react-i18next';
 
 const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const { t, i18n } = useTranslation();
+
+  // Checking if the user is authenticated
+  useEffect(() => {
+    const token = localStorage.getItem('auth_token');
+    setIsAuthenticated(!!token);
+  }, []);
+
+  // Changing the app language
+  const changeLanguage = (lng: string) => {
+    i18n.changeLanguage(lng);
+  };
 
   // Logging out the user and removing the token from local storage
   const handleLogout = (): void => {
@@ -35,11 +46,24 @@ const App: React.FC = () => {
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="ms-auto">
-              {isAuthenticated ? (
-                <>
-                  <Nav.Link as="button" onClick={handleLogout}><FontAwesomeIcon icon={faSignOut} /> Logout</Nav.Link>
-                </>
-              ) : null}
+              {isAuthenticated && (
+                <Nav.Link as="button" onClick={handleLogout} className="px-2">
+                  <FontAwesomeIcon icon={faSignOut} /> {t('Logout')}
+                </Nav.Link>
+              )}
+              <div className="d-flex justify-content-center">
+                <div style={{ height: 'auto', borderRight: '2px solid silver',  marginLeft: '5px', marginRight: '5px' }}></div>
+                <Nav.Link onClick={() => changeLanguage('en')}>
+                  EN
+                </Nav.Link>
+                <Nav.Link style={{ paddingLeft: '5px' }} onClick={() => changeLanguage('fi')}>
+                  FI
+                </Nav.Link>
+                <Nav.Link style={{ paddingLeft: '5px' }} onClick={() => changeLanguage('cn')}>
+                  CN
+                </Nav.Link>
+                <div style={{ height: 'auto', borderLeft: '2px solid silver', marginLeft: '5px' }}></div>
+              </div>
             </Nav>
           </Navbar.Collapse>
         </Container>
@@ -52,7 +76,7 @@ const App: React.FC = () => {
           <Route path="/user/:userEmail" element={<MainPage />} />
           <Route path="*" element={
             <div className="NotFound">
-              <p>404: This is not the webpage you are looking for</p>
+              <p>{t('404: This is not the webpage you are looking for')}</p>
             </div>
           } />
         </Routes>

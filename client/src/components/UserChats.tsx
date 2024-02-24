@@ -9,6 +9,7 @@ import { faHeartBroken, faComments, faSpinner } from '@fortawesome/free-solid-sv
 import { Spinner } from 'react-bootstrap';
 import { fetchWithAuth } from '../utils/fetchWithAuth';
 import UnauthorizedErrorPage from './UnAuthorizedErrorPage';
+import { useTranslation } from 'react-i18next';
 
 interface UserChatsProps {
     userEmail?: string;
@@ -24,6 +25,7 @@ const UserChats: React.FC<UserChatsProps> = ({ userEmail }) => {
     const [userNames, setUserNames] = useState<UserNameMap>({});
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
+    const { t } = useTranslation();
 
     // Fetching the user's interactions
     useEffect(() => {
@@ -45,7 +47,8 @@ const UserChats: React.FC<UserChatsProps> = ({ userEmail }) => {
                 })
                 .catch(error => {
                     setIsLoading(false);
-                    if (['UNAUTHORIZED', 'AUTH_EXPIRED'].some(e => error.message.includes(e))) {
+                    const errorMessage = error?.message ?? '';
+                    if (['UNAUTHORIZED', 'AUTH_EXPIRED'].some(e => errorMessage.includes(e))) {
                         setIsAuthenticated(false);
                     } else {
                         console.error('Error fetching interactions:', error);
@@ -66,7 +69,8 @@ const UserChats: React.FC<UserChatsProps> = ({ userEmail }) => {
                     setUserNames(prev => ({ ...prev, [userId]: userInfo.name }));
                 })
                 .catch(error => {
-                    if (['UNAUTHORIZED', 'AUTH_EXPIRED'].some(e => error.message.includes(e))) {
+                    const errorMessage = error?.message ?? '';
+                    if (['UNAUTHORIZED', 'AUTH_EXPIRED'].some(e => errorMessage.includes(e))) {
                         setIsAuthenticated(false);
                     } else {
                         console.error('Error fetching matched user info:', error);
@@ -101,7 +105,7 @@ const UserChats: React.FC<UserChatsProps> = ({ userEmail }) => {
                 {isLoading ? (
                     <div className="d-flex justify-content-center align-items-center" style={{ height: '100%' }}>
                         <Spinner animation="border" role="status" style={{ marginTop: '10%' }}>
-                            <span className="visually-hidden">Loading...</span>
+                            <span className="visually-hidden">{t('Loading...')}</span>
                         </Spinner>
                     </div>
                 ) : matches.length > 0 ? (
@@ -122,8 +126,8 @@ const UserChats: React.FC<UserChatsProps> = ({ userEmail }) => {
                 ) : (
                     <motion.div className="text-center p-5" variants={emptyStateVariants} initial="hidden" animate="visible">
                         <FontAwesomeIcon icon={faHeartBroken} size="3x" className="text-primary mb-3" />
-                        <h4>No Chats Available Yet</h4>
-                        <p>Try harder to get someone like you or be brave and like someone. No pain, no gain.</p>
+                        <h4>{t('No Chats Available Yet')}</h4>
+                        <p>{t('Try harder to get someone like you or be brave and like someone. No pain, no gain.')}</p>
                     </motion.div>
                 )}
             </div>
@@ -134,7 +138,7 @@ const UserChats: React.FC<UserChatsProps> = ({ userEmail }) => {
                     <motion.div className="d-flex align-items-center justify-content-center" style={{ height: '100%' }} variants={emptyStateVariants} initial="hidden" animate="visible">
                         <div className="text-center" style={{ marginLeft: '30px' }}>
                             <FontAwesomeIcon icon={faComments} size="4x" className="text-muted mb-3" />
-                            <p><strong>Select a chat to start messaging</strong></p>
+                            <p><strong>{t('Select a chat to start messaging')}</strong></p>
                         </div>
                     </motion.div>
                 ) : null}

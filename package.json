@@ -1,7 +1,7 @@
 {
-  "name": "full-stack",
+  "name": "full-stack-fake-tinder",
   "version": "1.0.0",
-  "description": "Advanced Web Applications Last Assignment",
+  "description": "Advanced Web Applications Project Work",
   "main": "index.js",
   "scripts": {
     "test": "cd client && npx cypress run",

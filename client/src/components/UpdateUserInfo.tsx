@@ -7,6 +7,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser, faEnvelope, faBirthdayCake, faPizzaSlice, faPalette, faFilm, IconDefinition } from '@fortawesome/free-solid-svg-icons';
 import { fetchWithAuth } from '../utils/fetchWithAuth';
 import UnauthorizedErrorPage from './UnAuthorizedErrorPage';
+import { useTranslation } from 'react-i18next';
 
 interface FormData {
     name: string;
@@ -37,6 +38,7 @@ const UpdateUserInfo: React.FC<UpdateUserInfoProps> = ({ userEmail, onUserInfoUp
     const [toastMessage, setToastMessage] = useState<string>('');
     const [isSuccess, setIsSuccess] = useState(true);
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
+    const { t } = useTranslation();
 
     // Fetching user information
     useEffect(() => {
@@ -67,10 +69,11 @@ const UpdateUserInfo: React.FC<UpdateUserInfoProps> = ({ userEmail, onUserInfoUp
             .catch(error => {
                 setIsSuccess(false);
                 setShowToast(true);
-                if (['UNAUTHORIZED', 'AUTH_EXPIRED'].some(e => error.message.includes(e))) {
+                const errorMessage = error?.message ?? '';
+                if (['UNAUTHORIZED', 'AUTH_EXPIRED'].some(e => errorMessage.includes(e))) {
                     setIsAuthenticated(false);
                 } else {
-                    setToastMessage(`Error fetching user info:  ${error}`);
+                    setToastMessage(t('Error fetching user info:') + " " + t(error));
                 }
             });
     };
@@ -109,7 +112,7 @@ const UpdateUserInfo: React.FC<UpdateUserInfoProps> = ({ userEmail, onUserInfoUp
             .then(response => {
                 if (!response) throw new Error('FETCH_ERROR');
                 if (response.ok) {
-                    setToastMessage('Your information has been updated successfully.');
+                    setToastMessage(t('Your information has been updated successfully.'));
                     setIsSuccess(true);
                     setShowToast(true);
                     onUserInfoUpdated(data.name);
@@ -120,10 +123,11 @@ const UpdateUserInfo: React.FC<UpdateUserInfoProps> = ({ userEmail, onUserInfoUp
             .catch(error => {
                 setIsSuccess(false);
                 setShowToast(true);
-                if (['UNAUTHORIZED', 'AUTH_EXPIRED'].some(e => error.message.includes(e))) {
+                const errorMessage = error?.message ?? '';
+                if (['UNAUTHORIZED', 'AUTH_EXPIRED'].some(e => errorMessage.includes(e))) {
                     setIsAuthenticated(false);
                 } else {
-                    setToastMessage(`Error updating user info: ${error}`);
+                    setToastMessage(t('Error updating user info:') + " " + t(error));
                 }
             });
     };
@@ -131,7 +135,7 @@ const UpdateUserInfo: React.FC<UpdateUserInfoProps> = ({ userEmail, onUserInfoUp
     // Creating input fields for the form using the given parameters
     const createInputField = (name: keyof FormData, label: string, type: 'text' | 'number' | 'email', icon: IconDefinition) => (
         <Form.Group as={Col} md="6" className="mb-3" controlId={`form${name}`}>
-            <Form.Label><FontAwesomeIcon icon={icon} /> {label}</Form.Label>
+            <Form.Label><FontAwesomeIcon icon={icon} /> {t(label)}</Form.Label>
             <Form.Control
                 type={type}
                 name={name}
@@ -139,7 +143,7 @@ const UpdateUserInfo: React.FC<UpdateUserInfoProps> = ({ userEmail, onUserInfoUp
                 onChange={handleChange}
                 required={name !== 'email'}
                 disabled={name === 'email'}
-                placeholder={`Enter ${label}`}
+                placeholder={t(`Enter ${label}`)}
                 style={name === 'email' ? { cursor: 'not-allowed' } : {}}
             />
         </Form.Group>
@@ -153,7 +157,7 @@ const UpdateUserInfo: React.FC<UpdateUserInfoProps> = ({ userEmail, onUserInfoUp
         <Container className="mt-5">
             <Card className="shadow">
                 <Card.Body>
-                    <Card.Title className="text-center mb-4">Update User Information</Card.Title>
+                    <Card.Title className="text-center mb-4">{t('Update User Information')}</Card.Title>
                     <Form onSubmit={handleSubmit}>
                         <Row>
                             {createInputField('name', 'Name', 'text', faUser)}
@@ -164,7 +168,7 @@ const UpdateUserInfo: React.FC<UpdateUserInfoProps> = ({ userEmail, onUserInfoUp
                             {createInputField('favoriteMovieGenre', 'Favorite Movie Genre', 'text', faFilm)}
                             {createInputField('email', 'Email', 'email', faEnvelope)}
                         </Row>
-                        <Button variant="primary" type="submit" className="mt-3 w-100">Update Information</Button>
+                        <Button variant="primary" type="submit" className="mt-3 w-100">{t('Update Information')}</Button>
                     </Form>
                 </Card.Body>
             </Card>

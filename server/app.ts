@@ -84,7 +84,7 @@ if (process.env.NODE_ENV === 'production') { //NODE_ENV=production npm start (fi
     app.get('*', (req: Request, res: Response) =>
         res.sendFile(path.resolve('..', 'client', 'build', 'index.html'))
     );
-    console.log("Server is running in production mode at http://localhost:3131");
+    console.log("server is running in production mode at http://localhost:3131");
 } else if (process.env.NODE_ENV === 'development') { //NODE_ENV=development npm start (or npm start)
     const corsOptions = {
         origin: 'http://localhost:3000',

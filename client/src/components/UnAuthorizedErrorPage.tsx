@@ -1,15 +1,17 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 const UnauthorizedErrorPage: React.FC = () => {
     const navigate = useNavigate();
+    const { t } = useTranslation();
 
     useEffect(() => {
         const timer = setTimeout(() => {
             localStorage.removeItem('auth_token');
             navigate('/login');
-        }, 7000); // Redirecting to login after 7 seconds
+        }, 5000); // Redirecting to login after 5 seconds
         return () => clearTimeout(timer);
     }, [navigate]);
 
@@ -20,9 +22,9 @@ const UnauthorizedErrorPage: React.FC = () => {
             transition={{ duration: 0.5 }}
             className="text-center"
         >
-            <h1>Oops! You're not authorized anymore.</h1>
-            <h3>Please login again to continue.</h3>
-            <p>Redirecting you to the login page in 7 seconds...</p>
+            <h1>{t('Oops! You are not authorized anymore.')}</h1>
+            <h3>{t('Please login again to continue.')}</h3>
+            <p>{t('Redirecting you to the login page in 5 seconds...')}</p>
         </motion.div>
     );
 };

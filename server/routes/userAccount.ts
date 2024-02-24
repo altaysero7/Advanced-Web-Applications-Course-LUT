@@ -39,7 +39,7 @@ router.post('/register', registrationValidation, function (req: Request, res: Re
         const customErrors = errors.array() as validationError[];
         const hasPasswordError = customErrors.some(error => error.path === 'password');
         if (hasPasswordError) {
-            return res.status(403).send("Password is not strong enough");
+            return res.status(403).send("Password is not strong enough: Password must be at least 8 characters long, must contain at least one lowercase letter, one uppercase letter, one number, and one special character");
         } else {
             return res.status(403).send("Invalid email structure");
         }

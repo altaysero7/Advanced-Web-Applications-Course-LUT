@@ -7,6 +7,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPaperPlane } from '@fortawesome/free-solid-svg-icons';
 import { fetchWithAuth } from '../utils/fetchWithAuth';
 import UnauthorizedErrorPage from './UnAuthorizedErrorPage';
+import { useTranslation } from 'react-i18next';
 
 const socket: Socket = io("http://localhost:4000"); // Connecting to the chat server
 
@@ -31,6 +32,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ currentUserEmail, selectedUser }) => 
     const [currentUserId, setCurrentUserId] = useState<string>("")
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
+    const { t } = useTranslation();
 
     // Chat is scrolling to the latest message
     const scrollToBottom = () => {
@@ -57,7 +59,8 @@ const ChatBox: React.FC<ChatBoxProps> = ({ currentUserEmail, selectedUser }) => 
                 setCurrentUserId(user.id);
             })
             .catch(error => {
-                if (['UNAUTHORIZED', 'AUTH_EXPIRED'].some(e => error.message.includes(e))) {
+                const errorMessage = error?.message ?? '';
+                if (['UNAUTHORIZED', 'AUTH_EXPIRED'].some(e => errorMessage.includes(e))) {
                     setIsAuthenticated(false);
                 } else {
                     console.error('Error fetching user ID:', error);
@@ -89,7 +92,8 @@ const ChatBox: React.FC<ChatBoxProps> = ({ currentUserEmail, selectedUser }) => 
                 })));
             })
             .catch(error => {
-                if (['UNAUTHORIZED', 'AUTH_EXPIRED'].some(e => error.message.includes(e))) {
+                const errorMessage = error?.message ?? '';
+                if (['UNAUTHORIZED', 'AUTH_EXPIRED'].some(e => errorMessage.includes(e))) {
                     setIsAuthenticated(false);
                 } else {
                     console.error('Error fetching chat history:', error);
@@ -129,7 +133,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ currentUserEmail, selectedUser }) => 
 
     return (
         <div className="card" style={{ maxWidth: '400px', overflow: 'hidden' }}>
-            <div className="card-header">Chat with {selectedUser.name}</div>
+            <div className="card-header">{t('Chat with')} {selectedUser.name}</div>
             <div className="card-body" style={{ height: '400px', overflowY: 'auto' }}>
                 {messages.map((msg, index) => (
                     <div key={index} style={{
@@ -144,6 +148,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ currentUserEmail, selectedUser }) => 
                             padding: '5px 10px',
                             maxWidth: '70%',
                             wordBreak: 'break-word',
+                            textAlign: 'left'
                         }}>
                             {msg.data}
                         </span>
@@ -159,18 +164,22 @@ const ChatBox: React.FC<ChatBoxProps> = ({ currentUserEmail, selectedUser }) => 
                     <input
                         type="text"
                         className="form-control"
-                        placeholder="Type a message..."
+                        placeholder={t('Type a message...')}
                         value={currentMessage}
                         onChange={(e) => setCurrentMessage(e.target.value)}
+                        maxLength={200}
                         style={{ marginRight: '5px' }}
                         onKeyDown={(e) => {
                             if (e.key === 'Enter') sendMessage();
                         }}
                     />
                     <button className="btn btn-primary" type="button" onClick={sendMessage}>
-                        Send <FontAwesomeIcon icon={faPaperPlane} />
+                        {t('Send')} <FontAwesomeIcon icon={faPaperPlane} />
                     </button>
                 </div>
+                <small style={{ display: 'block', textAlign: 'left', marginLeft: '5px', marginTop: '5px' }}>
+                    {currentMessage.length}/200
+                </small>
             </div>
         </div>
     );

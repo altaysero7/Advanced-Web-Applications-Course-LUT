@@ -9,6 +9,7 @@ import { faAppleAlt, faArrowLeft, faArrowRight, faBirthdayCake, faFilm, faHeart,
 import { Spinner } from 'react-bootstrap';
 import { fetchWithAuth } from '../utils/fetchWithAuth';
 import UnauthorizedErrorPage from './UnAuthorizedErrorPage';
+import { useTranslation } from 'react-i18next';
 
 interface Profile {
     userId: string;
@@ -34,6 +35,7 @@ const AllProfiles: React.FC<AllProfilesProps> = ({ currentUserEmail }) => {
     const [status, setStatus] = useState<ProfileStatus>({});
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
+    const { t } = useTranslation();
 
     // Fetching all profiles except the current user's
     useEffect(() => {
@@ -51,7 +53,8 @@ const AllProfiles: React.FC<AllProfilesProps> = ({ currentUserEmail }) => {
             })
             .catch(error => {
                 setIsLoading(false);
-                if (['UNAUTHORIZED', 'AUTH_EXPIRED'].some(e => error.message.includes(e))) {
+                const errorMessage = error?.message ?? '';
+                if (['UNAUTHORIZED', 'AUTH_EXPIRED'].some(e => errorMessage.includes(e))) {
                     setIsAuthenticated(false);
                 } else {
                     console.error('Error fetching profiles: ' + error.message)
@@ -82,7 +85,8 @@ const AllProfiles: React.FC<AllProfilesProps> = ({ currentUserEmail }) => {
                     setStatus(updatedStatus);
                 })
                 .catch(error => {
-                    if (['UNAUTHORIZED', 'AUTH_EXPIRED'].some(e => error.message.includes(e))) {
+                    const errorMessage = error?.message ?? '';
+                    if (['UNAUTHORIZED', 'AUTH_EXPIRED'].some(e => errorMessage.includes(e))) {
                         setIsAuthenticated(false);
                     } else {
                         console.error('Error fetching interactions: ' + error);
@@ -113,7 +117,8 @@ const AllProfiles: React.FC<AllProfilesProps> = ({ currentUserEmail }) => {
                 response.text()
             })
             .catch((error) => {
-                if (['UNAUTHORIZED', 'AUTH_EXPIRED'].some(e => error.message.includes(e))) {
+                const errorMessage = error?.message ?? '';
+                if (['UNAUTHORIZED', 'AUTH_EXPIRED'].some(e => errorMessage.includes(e))) {
                     setIsAuthenticated(false);
                 } else {
                     console.error('Error updating interactions: ' + error);
@@ -138,7 +143,7 @@ const AllProfiles: React.FC<AllProfilesProps> = ({ currentUserEmail }) => {
                 {isLoading ? (
                     <div className="d-flex justify-content-center" style={{ height: '100%' }}>
                         <Spinner animation="border" role="status" style={{ marginTop: '10%' }}>
-                            <span className="visually-hidden">Loading...</span>
+                            <span className="visually-hidden">{t('Loading...')}</span>
                         </Spinner>
                     </div>
                 ) : profiles.length > 0 ? profiles.map((profile, index) => (
@@ -171,16 +176,16 @@ const AllProfiles: React.FC<AllProfilesProps> = ({ currentUserEmail }) => {
                                 }} />
                                 <ul className="list-unstyled">
                                     <li className="card-text mb-2">
-                                        <FontAwesomeIcon icon={faBirthdayCake} className="me-2" />Age: {profile.age}
+                                        <FontAwesomeIcon icon={faBirthdayCake} className="me-2" />{t('Age')}: {profile.age}
                                     </li>
                                     <li className="card-text mb-2">
-                                        <FontAwesomeIcon icon={faAppleAlt} className="me-2" />Favorite Food: {profile.favoriteFood}
+                                        <FontAwesomeIcon icon={faAppleAlt} className="me-2" />{t('Favorite Food:')} {profile.favoriteFood}
                                     </li>
                                     <li className="card-text mb-2">
-                                        <FontAwesomeIcon icon={faPalette} className="me-2" />Favorite Color: {profile.favoriteColor}
+                                        <FontAwesomeIcon icon={faPalette} className="me-2" />{t('Favorite Color:')} {profile.favoriteColor}
                                     </li>
                                     <li className="card-text">
-                                        <FontAwesomeIcon icon={faFilm} className="me-2" />Favorite Movie Genre: {profile.favoriteMovieGenre}
+                                        <FontAwesomeIcon icon={faFilm} className="me-2" />{t('Favorite Movie Genre:')} {profile.favoriteMovieGenre}
                                     </li>
                                 </ul>
                                 <div className="reaction-icons text-center">
@@ -198,10 +203,10 @@ const AllProfiles: React.FC<AllProfilesProps> = ({ currentUserEmail }) => {
                             </div>
                             <div className="card-footer d-flex justify-content-between">
                                 <button className="btn btn-light btn-sm" onClick={() => handleSwipe('dislike', profile.userId)}>
-                                    <FontAwesomeIcon icon={faHeartBroken} color="red" /> Dislike
+                                    <FontAwesomeIcon icon={faHeartBroken} color="red" /> {t('Dislike')}
                                 </button>
                                 <button className="btn btn-light btn-sm" onClick={() => handleSwipe('like', profile.userId)}>
-                                    <FontAwesomeIcon icon={faHeart} color="green" /> Like
+                                    <FontAwesomeIcon icon={faHeart} color="green" /> {t('Like')}
                                 </button>
                             </div>
                         </motion.div>
@@ -209,7 +214,7 @@ const AllProfiles: React.FC<AllProfilesProps> = ({ currentUserEmail }) => {
                 )) : (
                     <div className="text-center w-100">
                         <FontAwesomeIcon icon={faHeartBroken} size="3x" color="grey" />
-                        <p>No profiles available.</p>
+                        <p>{t('No profiles available.')}</p>
                     </div>
                 )}
             </div>

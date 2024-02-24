@@ -12,12 +12,14 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSmileBeam } from '@fortawesome/free-solid-svg-icons';
 import { fetchWithAuth } from '../utils/fetchWithAuth';
 import UnauthorizedErrorPage from './UnAuthorizedErrorPage';
+import { useTranslation } from 'react-i18next';
 
 const MainPage: React.FC = () => {
     const { userEmail } = useParams();
     const [activeKey, setActiveKey] = useState<string>('profiles');
     const [userName, setuserName] = useState<string>('');
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
+    const { t } = useTranslation();
 
     // Rendering the active tab content
     const renderActiveTabContent = () => {
@@ -50,7 +52,8 @@ const MainPage: React.FC = () => {
                 setuserName(userInfo.name);
             })
             .catch(error => {
-                if (['UNAUTHORIZED', 'AUTH_EXPIRED'].some(e => error.message.includes(e))) {
+                const errorMessage = error?.message ?? '';
+                if (['UNAUTHORIZED', 'AUTH_EXPIRED'].some(e => errorMessage.includes(e))) {
                     setIsAuthenticated(false);
                 } else {
                     console.error('Error fetching user name:', error);
@@ -76,7 +79,7 @@ const MainPage: React.FC = () => {
                 className="text-center"
             >
                 <h2 className="mb-3" style={{ paddingBottom: '10px' }}>
-                    Welcome to Main Page{userName && <><span style={{ color: '#007bff' }}> {userName}</span></>}
+                    {t('Welcome to Main Page')}{userName && <><span style={{ color: '#007bff' }}> {userName}</span></>}
                     <FontAwesomeIcon icon={faSmileBeam} className="ms-2" color="#f0ad4e" />
                 </h2>
             </motion.div>
@@ -85,13 +88,13 @@ const MainPage: React.FC = () => {
                     <Col sm={3}>
                         <Nav variant="pills" className="flex-column">
                             <Nav.Item>
-                                <Nav.Link eventKey="profiles">Match with others</Nav.Link>
+                                <Nav.Link eventKey="profiles">{t('Match with others')}</Nav.Link>
                             </Nav.Item>
                             <Nav.Item>
-                                <Nav.Link eventKey="updateForm">Edit your information</Nav.Link>
+                                <Nav.Link eventKey="updateForm">{t('Edit your information')}</Nav.Link>
                             </Nav.Item>
                             <Nav.Item>
-                                <Nav.Link eventKey="chats">List your chats</Nav.Link>
+                                <Nav.Link eventKey="chats">{t('List your chats')}</Nav.Link>
                             </Nav.Item>
                         </Nav>
                     </Col>

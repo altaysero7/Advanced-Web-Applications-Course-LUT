@@ -5,26 +5,28 @@ import React from 'react';
 import { Button, Container, Row, Col } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import '../styles/HomePage.css';
+import { useTranslation } from 'react-i18next';
 
 const HomePage: React.FC = () => {
     const navigate = useNavigate();
+    const { t } = useTranslation();
 
     return (
         <Container className="mt-5">
             <Row className="justify-content-md-center">
                 <Col md="auto" className="text-center">
-                    <h1 className="mb-4">Welcome to FakeTinder</h1>
+                    <h1 className="mb-4">{t('Welcome to FakeTinder')}</h1>
                     <Button
                         variant="primary"
                         className="scale-on-hover me-2"
                         onClick={() => navigate('/login')}>
-                        Login
+                        {t('Login')}
                     </Button>
                     <Button
                         variant="secondary"
                         className="scale-on-hover"
                         onClick={() => navigate('/register')}>
-                        Register
+                        {t('Register')}
                     </Button>
                 </Col>
             </Row>
